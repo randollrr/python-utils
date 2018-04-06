@@ -50,7 +50,7 @@ class Config:
         try:
             self.file = str(os.environ['UTILS_CONFIG_FILE'])
         except KeyError:
-            print('    UTILS_CONFIG_FILE envar is not set. Using default "./config.yaml".')
+            # print('    UTILS_CONFIG_FILE envar is not set. Using default "./config.yaml".')
             self.file = 'config.yaml'
         with open(self.file, 'r') as f:
             self.params = yaml.load(f)  # ToDO: should be read in Config class
@@ -281,14 +281,14 @@ class Log:
 log = Log()
 
 
-class Email_Client:
+class Email:
     """A simple client to send email via a local sendmail instance
     """
     def __init__(self):
         config = Config()
         self.SENDMAIL = config.params['sendmail']
         self.from_addr = self.SENDMAIL['from']
-        self.to_addresses = self.SENDMAIL['stake_holders']
+        self.to_addresses = self.SENDMAIL['to']
 
     def send_email(self, subject, body):
         p = os.popen("%s -t" % self.SENDMAIL['path'], "w")
