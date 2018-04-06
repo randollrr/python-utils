@@ -99,19 +99,12 @@ class Database:
             log.error('Database.connect(): Unable to connect to the '
                       'database. [%s]' % e)
 
+        # TODO: Add support to "Database" to manage connection pool with multiple databases connections.
         """
-        db_tns = cx_Oracle.makedsn('ATSVLDB04.gsi.local', 1521, 'DELTEKTE')
-        db_cx  = cx_Oracle.connect('vtis','ornuapp',db_tns)
+        db_tns = cx_Oracle.makedsn('<host>', 1521, '<schema>')
+        db_cx  = cx_Oracle.connect('<user>','<password>',db_tns)
         db_cur = db_cx.cursor()
         """
-
-    def _decimal(self, num):
-        r = str(num)
-        if num is not None:
-            n = len(str(num).split('.'))
-            if 1 < n < 3:
-                r = float(num)
-        return r
 
     def disconnect(self):
         try:
@@ -179,6 +172,14 @@ class Database:
         return rows
 
     def tojson(self, model, query):
+        def decimal(num):
+            ret = str(num)
+            if num is not None:
+                n = len(str(num).split('.'))
+                if 1 < n < 3:
+                    ret = float(num)
+            return ret
+
         if model is None or query is None:
             log.error('Database.tojson(): Received an invalid Model/Query.')
             return
@@ -217,7 +218,7 @@ class Database:
             log.error('Database.tojson(): Error occurred. \n{0}'.format(e))
 
         # -- convert dict to json
-        r = json.dumps(model, indent=4, sort_keys=True, default=self._decimal)
+        r = json.dumps(model, indent=4, sort_keys=True, default=decimal)
         return r
 
 
@@ -278,9 +279,6 @@ class Log:
         self.logger.warn(msg)
 
 
-log = Log()
-
-
 class Email:
     """A simple client to send email via a local sendmail instance
     """
@@ -302,6 +300,4 @@ class Email:
             log.info("Sendmail exit status: {0}".format(sts))
 
 
-"""
-# TODO: Add support to "Database" to manage connection pool with multiple databases connections.
-"""
+log = Log()
