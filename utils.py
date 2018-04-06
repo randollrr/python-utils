@@ -9,7 +9,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 import json
 import logging
