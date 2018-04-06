@@ -235,8 +235,15 @@ class Log:
         log_level = config.params['logging']['log-level']
         self.log_filename = '%s/%s.log' % (config.params['directories']['app-log'],
                                            config.params['system']['app-name'])
-        file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
+        file_handler = None
+        try:
+            file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
+        except Exception:
+            self.log_filename = '%s/%s.log' % ('/tmp', config.params['system']['app-name'])
+            file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
+
         stream_handler = logging.StreamHandler()
+
         if log_level == "DEBUG":
             level = self.DEBUG
         elif log_level == "INFO":
@@ -249,9 +256,10 @@ class Log:
             level = self.DEBUG
         self.logger = logging.getLogger(config.params['system']['app-name'])
         self.logger.setLevel(level)
-        formatter = logging.Formatter(
-            '[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S +0000')
+
+        formatter = logging.Formatter('[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
+                                      datefmt='%Y-%m-%d %H:%M:%S +0000')
+
         stream_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(stream_handler)
