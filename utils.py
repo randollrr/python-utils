@@ -45,16 +45,28 @@ class Config:
 
         * specify UTILS_CONFIG_FILE envar for "config.yaml"
     """
-    def __init__(self):
+    def __init__(self, fname=None):
         self._state = False
         try:
             self.file = str(os.environ['UTILS_CONFIG_FILE'])
         except KeyError:
             # print('    UTILS_CONFIG_FILE envar is not set. Using default "./config.yaml".')
-            self.file = 'config.yaml'
+            if fname is None:
+                self.file = 'config.yaml'
+            else:
+                self.file = fname
+
         with open(self.file, 'r') as f:
-            self.params = yaml.load(f)  # ToDO: should be read in Config class
+            self._params = yaml.load(f)  # ToDO: should be read in Config class
             self._state = True
+
+    def __getitem__(self, item):
+        r = None
+        try:
+            r = self._params[item]
+        except KeyError:
+            pass
+        return r
 
     def status(self):
         return self._state
@@ -85,15 +97,15 @@ class Database:
             return
         try:
             self._conn = mysql.connect(
-                host=config.params['database']['host'],
-                user=config.params['database']['user'],
-                passwd=config.params['database']['password'],
-                db=config.params['database']['schema'])
+                host=config['database']['host'],
+                user=config['database']['user'],
+                passwd=config['database']['password'],
+                db=config['database']['schema'])
             log.info('Database.connect(): Connected to database via %s@%s '
                      'on %s.' % (
-                        config.params['database']['user'],
-                        config.params['database']['schema'],
-                        config.params['database']['host']))
+                        config['database']['user'],
+                        config['database']['schema'],
+                        config['database']['host']))
             self._state = True
         except Exception as e:
             log.error('Database.connect(): Unable to connect to the '
@@ -232,14 +244,13 @@ class Log:
         self.INFO = logging.INFO
         self.ERROR = logging.ERROR
         self.WARN = logging.WARN
-        log_level = config.params['logging']['log-level']
-        self.log_filename = '%s/%s.log' % (config.params['directories']['app-log'],
-                                           config.params['system']['app-name'])
-        file_handler = None
+        log_level = config['logging']['log-level']
+        self.log_filename = '%s/%s.log' % (config['directories']['app-log'],
+                                           config['system']['app-name'])
         try:
             file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
         except Exception:
-            self.log_filename = '%s/%s.log' % ('/tmp', config.params['system']['app-name'])
+            self.log_filename = '%s/%s.log' % ('/tmp', config['system']['app-name'])
             file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
 
         stream_handler = logging.StreamHandler()
@@ -254,7 +265,7 @@ class Log:
             level = self.WARN
         else:
             level = self.DEBUG
-        self.logger = logging.getLogger(config.params['system']['app-name'])
+        self.logger = logging.getLogger(config['system']['app-name'])
         self.logger.setLevel(level)
 
         formatter = logging.Formatter('[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
@@ -292,12 +303,12 @@ class Email:
     """
     def __init__(self):
         config = Config()
-        self.SENDMAIL = config.params['sendmail']
+        self.SENDMAIL = config['sendmail']
         self.from_addr = self.SENDMAIL['from']
         self.to_addresses = self.SENDMAIL['to']
 
     def send_email(self, subject, body):
-        p = os.popen("%s -t" % self.SENDMAIL['path'], "w")
+        p = os.popen("/usr/sbin/sendmail -t", "w")
         p.write("To: {0}\n".format(self.to_addresses))
         p.write("Subject: {0}\n".format(subject))
         p.write("From: {0}\n".format(self.from_addr))
