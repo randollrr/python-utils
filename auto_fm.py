@@ -4,7 +4,7 @@ import re
 from auto_utils import log
 
 __authors__ = ['randollrr']
-__version__ = '2.1'
+__version__ = '2.2'
 
 
 class FileManager:
@@ -34,7 +34,7 @@ class FileManager:
                         r = True
                     except Exception as e:
                         r = False
-                        log.error(f"Couldn't remove file: {fn}")
+                        log.error("Couldn't remove file: {}".format(fn))
                         log.debug(e)
 
     @staticmethod
@@ -57,7 +57,7 @@ class FileManager:
                     os.makedirs(os.path.join(path, d), exist_ok=True)
             r = True
         except Exception as e:
-            log.info(f"Couldn't setup directory structure.\n{e}")
+            log.info("Couldn't setup directory structure.\n{}".format(e))
         return r
 
     @staticmethod
@@ -165,10 +165,11 @@ class FileManager:
 
 
 # changelog
-# 1.0 initial release with ept file parser
 # 2.0 optimized move.do_move()
 #     added now return file ts in latest()
 #     ported dir_struct() from mongobak.py
 #     optimized latest() --> ts_sorted_file()
 #     added oldest()
 #     added delete()
+# 2.1 fixed path isssue in delete() by adding os.path.join()
+# 2.2 removed python 3.7 string formating
