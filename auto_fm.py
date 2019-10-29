@@ -49,11 +49,11 @@ class FileManager:
         if not known_dir:
             known_dir = ['daily', 'weekly', 'monthly']
 
-        log.info(f'check directory structure for: {path}')
+        log.info('check directory structure for: {}'.format(path))
         try:
             for d in known_dir:
                 if not os.path.exists(os.path.join(path, d)):
-                    log.info(f'Creating: {path}/{d}')
+                    log.info('Creating: {}/{}'.format(path, d))
                     os.makedirs(os.path.join(path, d), exist_ok=True)
             r = True
         except Exception as e:
@@ -96,7 +96,7 @@ class FileManager:
                     ret = '{}_{}.{}'.format(nfn, fnum, ext)
                 except Exception as e:
                     ret = '{}_{}'.format(fn, fnum)
-                    log.debug(f'Error: {e}')
+                    log.debug('Error: {}'.format(e))
             return ret
 
         def do_move(fnum=0):
@@ -139,8 +139,8 @@ class FileManager:
                 directory = self.src
 
         # -- build file list
-        log.debug(f'directory: {directory}')
-        log.debug(f'directory exists: {self.exists(directory)}')
+        log.debug('directory: {}'.format(directory))
+        log.debug('directory exists: {}'.format(self.exists(directory)))
         if directory and self.exists(directory):
             t = []
             l = [[int(os.stat(os.path.join(directory, f)).st_ctime*1000), f] for f in os.listdir(directory)]
