@@ -1,75 +1,25 @@
 """
-Utils is intended to be a swiss-army-knife toolbox that houses boilerplate codes
+Extracted from Utils (which is intended to be a swiss-army-knife toolbox that houses boilerplate codes)
 for many apps or scripts. A generic API to access:
-    * databases,
-    * config files,
-    * logs,
-    * email servers for notifications,
-    * simple encryption, etc...
-
+    * databases:
+      - oracle
+      - mysql
+      - and mongodb
 """
-__authors__ = ['randollrr', 'msmith8']
-__version__ = '1.5.0'
+__authors__ = ['randollrr']
+__version__ = '1.6.0'
 
 import json
-import logging
-import os
-import warnings
-import yaml
-from logging.handlers import RotatingFileHandler
 
 try:
     import MySQLdb as mysql  # TODO: only import if necessary or in config file
     import cx_Oracle as oracle  # TODO: only import if necessary or in config file
+    import yaml
 except ImportError:
     pass
 
-
-def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emmitted
-    when the function is used."""
-    def new_func(*args, **kwargs):
-        warnings.warn("Call to deprecated function {0}.".format(func.__name__),
-                      category=DeprecationWarning)
-        return func(*args, **kwargs)
-    new_func.__name__ = func.__name__
-    new_func.__doc__ = func.__doc__
-    new_func.__dict__.update(func.__dict__)
-    return new_func
-
-
-class Config:
-    """
-    Read and write configuration file(s). 2015.06.19|randollrr
-
-        * specify UTILS_CONFIG_FILE envar for "config.yaml"
-    """
-    def __init__(self, fname=None):
-        self._state = False
-        try:
-            self.file = str(os.environ['UTILS_CONFIG_FILE'])
-        except KeyError:
-            # print('    UTILS_CONFIG_FILE envar is not set. Using default "./config.yaml".')
-            if fname is None:
-                self.file = 'config.yaml'
-            else:
-                self.file = fname
-
-        with open(self.file, 'r') as f:
-            self._params = yaml.load(f)  # ToDO: should be read in Config class
-            self._state = True
-
-    def __getitem__(self, item):
-        r = None
-        try:
-            r = self._params[item]
-        except KeyError:
-            pass
-        return r
-
-    def status(self):
-        return self._state
+from utils import Config
+from utils import log
 
 
 class Database:
@@ -232,91 +182,3 @@ class Database:
         # -- convert dict to json
         r = json.dumps(model, indent=4, sort_keys=True, default=decimal)
         return r
-
-
-class Log:
-    """
-    Logging wrapper class for apps and scripts. 2016.02.10|randollrr
-    """
-    def __init__(self):
-        config = Config()
-        self.DEBUG = logging.DEBUG
-        self.INFO = logging.INFO
-        self.ERROR = logging.ERROR
-        self.WARN = logging.WARN
-        log_level = config['logging']['log-level']
-        self.log_filename = '%s/%s.log' % (config['directories']['app-log'],
-                                           config['system']['app-name'])
-        try:
-            file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
-        except Exception:
-            self.log_filename = '%s/%s.log' % ('/tmp', config['system']['app-name'])
-            file_handler = RotatingFileHandler(self.log_filename, maxBytes=1024000, backupCount=1)
-
-        stream_handler = logging.StreamHandler()
-
-        if log_level == "DEBUG":
-            level = self.DEBUG
-        elif log_level == "INFO":
-            level = self.INFO
-        elif log_level == "ERROR":
-            level = self.ERROR
-        elif log_level == "WARN":
-            level = self.WARN
-        else:
-            level = self.DEBUG
-        self.logger = logging.getLogger(config['system']['app-name'])
-        self.logger.setLevel(level)
-
-        formatter = logging.Formatter('[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
-                                      datefmt='%Y-%m-%d %H:%M:%S +0000')
-
-        stream_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(stream_handler)
-        self.logger.addHandler(file_handler)
-
-    def addhandler(self, handler):
-        self.logger.addHandler(handler)
-
-    def debug(self, msg):
-        self.logger.debug(msg)
-
-    def error(self, msg):
-        self.logger.error(msg)
-
-    def filename(self):
-        return self.log_filename
-
-    def gethandler(self):
-        return self.logger.handlers
-
-    def info(self, msg):
-        self.logger.info(msg)
-
-    def warn(self, msg):
-        self.logger.warn(msg)
-
-
-class Email:
-    """A simple client to send email via a local sendmail instance
-    """
-    def __init__(self):
-        config = Config()
-        self.SENDMAIL = config['sendmail']
-        self.from_addr = self.SENDMAIL['from']
-        self.to_addresses = self.SENDMAIL['to']
-
-    def send_email(self, subject, body):
-        p = os.popen("/usr/sbin/sendmail -t", "w")
-        p.write("To: {0}\n".format(self.to_addresses))
-        p.write("Subject: {0}\n".format(subject))
-        p.write("From: {0}\n".format(self.from_addr))
-        p.write("\n")  # blank line separating headers from body
-        p.write(body)
-        sts = p.close()
-        if sts != 0:
-            log.info("Sendmail exit status: {0}".format(sts))
-
-
-log = Log()

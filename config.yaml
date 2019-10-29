@@ -1,0 +1,10 @@
+system:
+  app-name: app
+logging:
+  log-level: DEBUG
+directories:
+  app-log: /var/log
+sendmail:
+  path: /usr/sbin/sendmail
+  from: no-reply@example.com
+  to: randollrr@example.com

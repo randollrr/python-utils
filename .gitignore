@@ -1,0 +1,10 @@
+# environment
+env/
+venv/
+
+
+# IDE
+.idea/
+.vscode
+.project
+.settings/
