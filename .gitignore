@@ -1,10 +1,11 @@
 # environment
 env/
 venv/
+*.pyc
 
 
 # IDE
 .idea/
-.vscode
+.vscode/
 .project
 .settings/
