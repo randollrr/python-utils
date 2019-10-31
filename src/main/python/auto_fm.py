@@ -19,7 +19,7 @@ class FileManager:
         self.arc = archive
 
     @staticmethod
-    def delete_files(path, files):
+    def del_files(path, files):
         """
         Delete list of files provided.
         :param path: directory (only)
@@ -124,6 +124,33 @@ class FileManager:
         """
         return self.ts_sorted_file('oldest', directory=directory, fn_pattern=fn_pattern)
 
+    @staticmethod
+    def retainer(bp, fn, ret_d):
+        """
+        Function to apply retention policy.
+        :param bp: base path
+        :param fn: file names containing substring
+        :param ret_d: number of files to retain 
+        """
+        if ret_d > 0:
+            fm = FileManager(bp)
+            del_l = fm.ts_sorted_file('list', fn_pattern='.*{}.*'.format(fn))
+            if not ret_d > len(del_l):
+                t = []
+                # -- unpack filename
+                for f in del_l:
+                    t += [f[0]]
+                del_l = t[:len(t)-ret_d]
+                log.debug('list of file to delete: {}'.format(del_l))
+                FileManager.del_files(bp, del_l)
+                del del_l, t
+            log.info('applied retention policy: {}'.format(bp))
+
+    @staticmethod
+    def touch(fn, time=None):
+        with open(fn, 'a') as f:
+            os.utime(f.name, time)
+
     def ts_sorted_file(self, action='latest', directory=None, fn_pattern=None):
         """
         Look for the latest or oldest modified date from files in directory.
@@ -162,14 +189,3 @@ class FileManager:
                 r = final[0], final[1]
             del l, t, action, final
         return r
-
-
-# changelog
-# 2.0 optimized move.do_move()
-#     added now return file ts in latest()
-#     ported dir_struct() from mongobak.py
-#     optimized latest() --> ts_sorted_file()
-#     added oldest()
-#     added delete()
-# 2.1 fixed path isssue in delete() by adding os.path.join()
-# 2.2 removed python 3.7 string formating
