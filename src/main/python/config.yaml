@@ -1,4 +1,4 @@
-system:
+service:
   app-name: app
   app-logs: /var/log
   log-level: DEBUG
