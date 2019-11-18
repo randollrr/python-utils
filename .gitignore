@@ -1,0 +1,22 @@
+# environment
+.idea/
+.project
+.pytest_cache/
+__pycache__/
+.settings/
+.vscode/
+env/
+tmp/
+venv/
+
+# extensions
+*.log
+*.pyc
+
+# project
+target/
+*.csv*
+*.tar
+*.tar.gz
+build.sbt
+build.properties
