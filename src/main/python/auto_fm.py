@@ -182,10 +182,12 @@ class FileManager:
             if action == 'list':
                 return t
             if action == 'latest':
-                final = t[len(t) - 1][0], int(t[len(t) - 1][1])
+                final = t[len(t)-1][0], t[len(t)-1][1]
             elif action == 'oldest':
-                final = t[0][0], int(t[0][1])
+                final = t[0][0], t[0][1]
             if final:
                 r = final[0], final[1]
             del l, t, action, final
         return r
+
+fm = FileManager()
