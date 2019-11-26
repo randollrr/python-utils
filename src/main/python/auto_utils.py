@@ -8,7 +8,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.7'
+__version__ = '1.8'
 
 import json
 import logging
@@ -169,15 +169,16 @@ class Log:
         formatter = logging.Formatter('[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S +0000')
         # -- file based logging
-        try:
-            self.log_filename = '{}/{}.log'.format(self._config['service']['app-logs'],
-                                                   self._config['service']['app-name'])
-            file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
-        except PermissionError:
-            self.log_filename = '/tmp/{}.log'.format(self._config['service']['app-name'])
-            file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
+        if self._config['service']['app-logs']:
+            try:
+                self.log_filename = '{}/{}.log'.format(self._config['service']['app-logs'],
+                                                    self._config['service']['app-name'])
+                file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
+            except PermissionError:
+                self.log_filename = '/tmp/{}.log'.format(self._config['service']['app-name'])
+                file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
 
         # -- on-screen/stdout logging
         if self._config['service']['log-stdout']:
