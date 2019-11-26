@@ -4,7 +4,7 @@ import re
 from auto_utils import log
 
 __authors__ = ['randollrr']
-__version__ = '2.2'
+__version__ = '2.3'
 
 
 class FileManager:
