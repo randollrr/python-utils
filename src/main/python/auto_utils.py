@@ -8,7 +8,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.9'
+__version__ = '1.10'
 
 import json
 import logging
@@ -118,6 +118,7 @@ class Log:
         self.ERROR = logging.ERROR
         self.WARN = logging.WARN
         self.logger = None
+        self.handlers = {'file': None, 'screen': None}
 
         self._config = Config()
         if self._config.status():
@@ -145,7 +146,12 @@ class Log:
         return self.log_filename
 
     def gethandler(self):
-        return self.logger.handlers
+        r = self.logger.handlers
+        if self.handlers['file']:
+            r = self.handlers['file']
+        elif self.handlers['screen']:
+            r = self.handlers['screen']
+        return r
 
     def info(self, msg):
         if not self._config.status():
@@ -184,12 +190,14 @@ class Log:
                 file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
+            self.handlers['file'] = file_handler
 
         # -- on-screen/stdout logging
         if self._config['service']['log-stdout']:
             stream_handler = logging.StreamHandler()
             stream_handler.setFormatter(formatter)
             self.logger.addHandler(stream_handler)
+            self.handlers['screen'] = stream_handler
 
     def warn(self, msg):
         self.logger.warning(msg)
