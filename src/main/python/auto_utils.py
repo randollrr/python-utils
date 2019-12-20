@@ -8,7 +8,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.8'
+__version__ = '1.9'
 
 import json
 import logging
@@ -151,6 +151,11 @@ class Log:
         if not self._config.status():
             self._set_logger()
         self.logger.info(msg)
+
+    def reset(self):
+        if self.filename():
+            with open(self.filename(), 'w'):
+                pass
 
     def _set_logger(self):
         log_level = self._config['service']['log-level']
