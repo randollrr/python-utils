@@ -122,7 +122,7 @@ class Log:
 
         self._config = Config()
         if self._config.status():
-            self._set_logger()
+            self.set_logger()
 
     def addhandler(self, handler):
         self.logger.addHandler(handler)
@@ -130,16 +130,16 @@ class Log:
     def config(self, conf):
         self._config = conf
         if self._config.status():
-            self._set_logger()
+            self.set_logger()
 
     def debug(self, msg):
         if not self._config.status():
-            self._set_logger()
+            self.set_logger()
         self.logger.debug(msg)
 
     def error(self, msg):
         if not self._config.status():
-            self._set_logger()
+            self.set_logger()
         self.logger.error(msg)
 
     def filename(self):
@@ -155,7 +155,7 @@ class Log:
 
     def info(self, msg):
         if not self._config.status():
-            self._set_logger()
+            self.set_logger()
         self.logger.info(msg)
 
     def reset(self):
@@ -163,7 +163,7 @@ class Log:
             with open(self.filename(), 'w'):
                 pass
 
-    def _set_logger(self):
+    def set_logger(self, svcname=None):
         log_level = self._config['service']['log-level']
         if log_level == "DEBUG":
             level = self.DEBUG
@@ -175,7 +175,10 @@ class Log:
             level = self.WARN
         else:
             level = self.DEBUG
-        self.logger = logging.getLogger(self._config['service']['app-name'])
+        if svcname:
+            self.logger = logging.getLogger(svcname)
+        else:
+            self.logger = logging.getLogger(self._config['service']['app-name'])
         self.logger.setLevel(level)
         formatter = logging.Formatter('[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S +0000')
