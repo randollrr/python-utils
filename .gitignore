@@ -20,3 +20,6 @@ target/
 *.tar.gz
 build.sbt
 build.properties
+
+# exceptions
+auto_mysql.py
