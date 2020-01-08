@@ -8,7 +8,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.10'
+__version__ = '1.11'
 
 import json
 import logging
@@ -119,6 +119,7 @@ class Log:
         self.WARN = logging.WARN
         self.logger = None
         self.handlers = {'file': None, 'screen': None}
+        self._log_filename = None
 
         self._config = Config()
         if self._config.status():
@@ -143,7 +144,7 @@ class Log:
         self.logger.error(msg)
 
     def filename(self):
-        return self.log_filename
+        return self._log_filename
 
     def gethandler(self):
         r = self.logger.handlers
@@ -185,12 +186,12 @@ class Log:
         # -- file based logging
         if self._config['service']['app-logs']:
             try:
-                self.log_filename = '{}/{}.log'.format(self._config['service']['app-logs'],
+                self._log_filename = '{}/{}.log'.format(self._config['service']['app-logs'],
                                                     self._config['service']['app-name'])
-                file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
+                file_handler = RotatingFileHandler(self._log_filename, maxBytes=100*1024*1024, backupCount=3)
             except PermissionError:
-                self.log_filename = '/tmp/{}.log'.format(self._config['service']['app-name'])
-                file_handler = RotatingFileHandler(self.log_filename, maxBytes=100*1024*1024, backupCount=3)
+                self._log_filename = '/tmp/{}.log'.format(self._config['service']['app-name'])
+                file_handler = RotatingFileHandler(self._log_filename, maxBytes=100*1024*1024, backupCount=3)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
             self.handlers['file'] = file_handler
