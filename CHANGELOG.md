@@ -1,7 +1,7 @@
 # auto_utils.py
 
 ## 1.11
-- added missing initialization for log.log_filename and made private (log._log_filename)
+- added missing initialization to log.log_filename and made private (log._log_filename)
 
 ## 1.10
 - show logging on screen only
@@ -48,5 +48,5 @@
 # auto_mongo.py 
 
 ## 1.0 
-- easy connection 
+- easy connection
 - basic CRUD functionalities
