@@ -116,6 +116,7 @@ class MongoCRUD:
                 c = 201
                 m = 'Data inserted.'
         except Exception as e:
+            r = doc
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
@@ -182,11 +183,13 @@ class MongoCRUD:
         
         try:
             if isinstance(doc, dict):
-                obj = self.collection.replace_one(doc)
-                log.info('update(): update_count: {}, doc: {}'.format(obj.count(), doc))
+                obj = self.collection.replace_one({'_id': doc['_id']}, doc)
+                log.info('update(): ack: {}, match_count: {}, modified_count: {}, doc: {}'.format(
+                    obj.acknowledged, obj.matched_count, obj.modified_count, doc))
                 c = 200
                 m = 'Document(s) updated.'
         except Exception as e:
+            r = doc
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
@@ -227,9 +230,11 @@ class MongoCRUD:
                     for s in statement:
                         obj = self.collection.delete_one(s)
                         log.info('delete: ack: {}, delete_count: {}, doc: {}'.format(obj.acknowledged, obj.deleted_count, s))
+                r = statement
                 c = 410
                 m = 'Item(s) delete.'
         except Exception as e:
+            r = where
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
