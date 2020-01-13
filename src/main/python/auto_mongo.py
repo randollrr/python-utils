@@ -34,9 +34,9 @@ class MongoDB:
             else:
                 db_config = config['mongo.prod']
                 self.environ = 'prod'
-            log.debug('Using mongo.{} configuration.'.format(self.environ))
+            log.info('Using mongo.{} configuration.'.format(self.environ))
         else:
-            log.debug('Using db_config provided: {}'.format(db_config))
+            log.info('Using db_config provided: {}'.format(db_config))
         
         if db_config:
             self.client = MongoClient(
@@ -89,13 +89,14 @@ class MongoCRUD:
         self.connector = MongoDB(collection=collection, db=db)
         self.collection = self.connector.collection
 
-    def create(self, statement=None, collection=None, db=None):
+    def create(self, doc=None, collection=None, db=None):
         """
         Insert object(s).
-        :param statement: data to be inserted.
+        :param doc: data to be inserted.
         :param collection: to change collection/table
         :param db: to change database
         """
+        log.info('inserting doc: {}'.format(doc))
         self._update_session(collection, db)
         r = None
         c = 204
@@ -103,12 +104,12 @@ class MongoCRUD:
         
         try:
             ins = None
-            if isinstance(statement, dict):
-                ins = self.collection.insert_one(statement)
+            if isinstance(doc, dict):
+                ins = self.collection.insert_one(doc)
                 r = [str(ins.inserted_id)]
                 log.info('inserted: {}, {}'.format(ins.acknowledged, ins.inserted_id))
-            elif isinstance(statement, list):
-                ins = self.collection.insert_many(statement)
+            elif isinstance(doc, list):
+                ins = self.collection.insert_many(doc)
                 r = [str(i) for i in ins.inserted_ids]
                 log.info('inserted: {}, {}'.format(ins.acknowledged, r))
             if r:
@@ -131,26 +132,27 @@ class MongoCRUD:
         :param like: use find() with $regex i.e. like={'employe_name': '^Ran'}
         """
         self._update_session(collection, db)
-        r = None
+        r = statement = None
         c = 404
         m = 'No data returned.'
+        doc_count = 0
 
         try:
             if where:
                 statement = where
             else:
                 statement = {}
+            log.info('retrieving doc(s) like: {}'.format(statement))
+            
             if isinstance(aggr_cols, list):
                 if isinstance(aggr_type, dict):
                     pass  # sum
                 else:
                     pass  # count
                 data = None
-            elif isinstance(projection, dict):
+            elif isinstance(statement, dict):
                 data = self.collection.find(statement, projection=projection)
-            else:
-                data = self.collection.find(statement)
-            doc_count = data.count()
+                doc_count = data.count()
             
             if doc_count > 0:
                 r = data
@@ -158,6 +160,7 @@ class MongoCRUD:
                 m = 'OK'
             log.info('data: {} doc(s).'.format(doc_count))
         except Exception as e:
+            r = statement
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
@@ -171,6 +174,7 @@ class MongoCRUD:
         :param like: use filter with $regex i.e. like={'employe_name': '^Ran'}
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
         """
+        log.info('updating: {}'.format(doc))
         self._update_session(collection, db)
         r = []
         c = 204
@@ -199,7 +203,8 @@ class MongoCRUD:
             delete([{'_id': '5e114ad941734d371c5f84b9'}, {'age': 25}])
             delete({'person.fname': 'Randoll'}   # delete document where {'person': {'fname': 'Randoll'}}
             delete({})                           # delete all in collection, not allowed
-        """        
+        """
+        log.info('deleting doc(s) like: {}'.format(where))
         self._update_session(collection, db)
         r = []
         c = 204
