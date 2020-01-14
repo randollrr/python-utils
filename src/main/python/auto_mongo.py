@@ -185,7 +185,7 @@ class MongoCRUD:
         
         try:
             if isinstance(doc, dict):
-                obj = self.collection.replace_one({'_id': doc['_id']}, doc)
+                obj = self.collection.replace_one({'_id': self._encode_objectid(doc['_id'])}, doc)
                 log.info('update(): ack: {}, match_count: {}, modified_count: {}, doc: {}'.format(
                     obj.acknowledged, obj.matched_count, obj.modified_count, doc))
                 c = 200
