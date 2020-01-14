@@ -19,6 +19,7 @@ def test_connection(dbms):
     assert db.status()
     assert not dbms['dao'].connector.close()
 
+# @pytest.mark.skip
 def test_create(dbms):
     assert dbms['dao'].create({'_id': 'randollrr', 'name': 'Randoll Revers', 'gender': 'M', 'age': None})
     
@@ -63,17 +64,18 @@ def test_create(dbms):
 
 def test_read(dbms):
     assert dbms['dao'].read()
+    assert dbms['dao'].read({'_test': '_test'})['status']['code'] == 404
 
 
 def test_update(dbms):
     data = dbms['dao'].read({'_id': 4})['data'][0]
     for d in data['points']:
         if d['points'] == 51:
-            d['bonus'] = 50
+            d['bonus'] = 888
     dbms['dao'].update(data)
-    dbms['dao'].read({'_id': 4})
 
 
+# @pytest.mark.skip
 def test_delete(dbms):
     assert dbms['dao'].delete({})['status']['code'] == 204
     if object_ids.get('delete_list'):
