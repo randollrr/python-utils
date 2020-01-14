@@ -153,9 +153,11 @@ class MongoCRUD:
                 data = None
             elif isinstance(statement, dict):
                 data = self.collection.find(statement, projection=projection)
-                doc_count = data.count()
-            
+                
+            for _ in data:
+                doc_count += 1
             if doc_count > 0:
+                data.rewind()
                 r = data
                 c = 200
                 m = 'OK'
