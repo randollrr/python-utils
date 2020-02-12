@@ -8,7 +8,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.11'
+__version__ = '1.12'
 
 import json
 import logging
@@ -18,7 +18,7 @@ from logging.handlers import RotatingFileHandler
 
 yaml = None
 try:
-    import yaml
+    import yaml  # 5.1.1+
 except ImportError:
     pass
 
@@ -51,7 +51,7 @@ class Config:
         if not self.file:
             if os.path.exists('{}/config.json'.format(wd())):
                 self.file = '{}/config.json'.format(wd())
-            elif yaml and os.path.exists('{}/config.yaml').format(wd()):
+            elif yaml and os.path.exists('{}/config.yaml'.format(wd())):
                 self.file = '{}/config.yaml'.format(wd())
 
         # -- read configs
@@ -69,7 +69,7 @@ class Config:
         return ft
 
     def __getitem__(self, item):
-        r = None
+        r = {}
         try:
             r = self.params[item]
         except Exception:
@@ -240,3 +240,6 @@ def wd():
 
 log = Log()
 config = Config()
+
+
+# 1.12 
