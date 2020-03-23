@@ -141,7 +141,7 @@ class MongoCRUD:
 
         try:
             if where:
-                statement = where
+                statement = self._encode_objectid(where)
             else:
                 statement = {}
             log.info('retrieving doc(s) like: {}'.format(statement))
@@ -290,5 +290,3 @@ class MongoCRUD:
             else:
                 self.collection = self.connector.db[collection]    
         log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
-
-
