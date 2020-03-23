@@ -45,7 +45,8 @@ class MongoDB:
                 password=db_config['password'],
                 authSource=db_config['authenticationDatabase'])
             # -- setup database
-            if db:
+            
+            if self.db:
                 self.db = self.client[db]
             else:
                 if db_config.get('database'):
@@ -64,7 +65,7 @@ class MongoDB:
         if self.connected:
             log.info('CONNECTED to {}@{}'.format(self.db.name, db_config['host']))
         else:
-            log.info('NOT CONNECTED. (db={}, host={})'.format(self.db.name, db_config['host']))
+            log.info('NOT CONNECTED. (db={}, host={})'.format(db_config.get('database'), db_config.get('host')))
 
     def close(self):
         if self.status():
@@ -289,3 +290,5 @@ class MongoCRUD:
             else:
                 self.collection = self.connector.db[collection]    
         log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
+
+
