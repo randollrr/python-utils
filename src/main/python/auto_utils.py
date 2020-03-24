@@ -240,6 +240,3 @@ def wd():
 
 log = Log()
 config = Config()
-
-
-# 1.12 
