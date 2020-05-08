@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 frictionlessly.
 """
 __authors__ = ['randollrr']
-__version__ = '1.0'
+__version__ = '1.1'
 
 import json
 import os
@@ -46,7 +46,7 @@ class MongoDB:
                 authSource=db_config['authenticationDatabase'])
             # -- setup database
             
-            if self.db:
+            if db:
                 self.db = self.client[db]
             else:
                 if db_config.get('database'):
@@ -122,39 +122,60 @@ class MongoCRUD:
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
 
-    def read(self, where=None, collection=None, db=None, projection=None, aggr_cols=None, aggr_type=None, like=None):
+    def read(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
         """
         Read <database>.<collection>.
         :param where: filter object to look for
         :param collection: to change collection/table
         :param db: to change database
-        :param projection: fields to return in response
+        :param projection: fields to return in response i.e. {'name': true, 'department': true}
         :param aggr_cols: fields to group by ['name', 'department', 'salary']
-        :param aggr_type: 'count', 'sum' i.e. aggr_type='count' or aggr_type={'sum': 'salary'}
+        :param aggr_type: 'count', 'sum' i.e. aggr_type={'count': 'salary'} or aggr_type={'sum': 'salary'}
         :param like: use find() with $regex i.e. like={'employe_name': '^Ran'}
         """
         self._update_session(collection, db)
-        r = statement = None
+        r = None
         c = 404
         m = 'No data returned.'
         doc_count = 0
-
+        statement = []
+        
         try:
+            # -- build statement
             if where:
-                statement = self._encode_objectid(where)
-            else:
-                statement = {}
-            log.info('retrieving doc(s) like: {}'.format(statement))
+                self._encode_objectid(where)
+                for k in where:
+                    if where[k] is None:
+                        statement += [(k, {'$exist': False})]
+                    else:
+                        statement += [(k, where[k])]
+
+            # if isinstance(projection, dict):
+            #     if not statement:
+            #         statement += [('_id', {'$exists': True})]
+            #     for k in projection:
+            #         statement += [(k, projection[k])]
+
+            log.debug('retrieving doc(s) like: {}'.format(statement))
+            
             
             if isinstance(aggr_cols, list):
                 if isinstance(aggr_type, dict):
                     pass  # sum
                 else:
                     pass  # count
-                data = None
-            elif isinstance(statement, dict):
-                data = self.collection.find(statement, projection=projection)
+            
+            # -- execute statement
+            if isinstance(sort, dict):
+                k = None
+                for k in sort:
+                    pass
+                data = self.collection.find(SON(statement)).sort(k, sort[k])
+            else:
+                data = self.collection.find(SON(statement))
+
                 
+            # -- collect result
             for _ in data:
                 doc_count += 1
             if doc_count > 0:
@@ -163,6 +184,7 @@ class MongoCRUD:
                 c = 200
                 m = 'OK'
             log.info('data: {} doc(s).'.format(doc_count))
+        
         except Exception as e:
             r = statement
             c = 500
@@ -289,4 +311,4 @@ class MongoCRUD:
                 self.collection = self.connector.db.client[db][collection]
             else:
                 self.collection = self.connector.db[collection]    
-        log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
+        log.debug('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
