@@ -1,4 +1,7 @@
+import json
+
 import pytest
+
 from auto_mongo import MongoDB
 from auto_mongo import MongoCRUD
 from auto_utils import config
@@ -63,10 +66,12 @@ def test_create(dbms):
 
 
 def test_read(dbms):
-    assert dbms['dao'].read()
+    assert dbms['dao'].read()['status']['code'] == 200
     assert dbms['dao'].read({'_test': '_test'})['status']['code'] == 404
+    assert dbms['dao'].read({}, sort={'_id': -1})['status']['code'] == 200
+    # assert dbms['dao'].read({}, projection={'_id': False})['status']['code'] == 200
 
-
+# @pytest.mark.skip
 def test_update(dbms):
     data = dbms['dao'].read({'_id': 4})['data'][0]
     for d in data['points']:
@@ -84,6 +89,7 @@ def test_delete(dbms):
 
 
 # @pytest.fixture
-# def test_teardown(dbms):
-#     dbo = dbms['db']
-#     dbo.client.drop_database(dbo.db.name)
+def test_teardown(dbms):
+    dbo = dbms['db']
+    dbo.drop_collection('test')
+    dbo.client.drop_database('test_db')
