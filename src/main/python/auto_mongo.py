@@ -167,10 +167,11 @@ class MongoCRUD:
             
             # -- execute statement
             if isinstance(sort, dict):
-                k = None
+                s_list = []
                 for k in sort:
-                    pass
-                data = self.collection.find(SON(statement)).sort(k, sort[k])
+                    s_list += [(k, sort[k])]
+                data = self.collection.find(SON(statement)).sort(s_list)
+                del s_list
             else:
                 data = self.collection.find(SON(statement))
 
