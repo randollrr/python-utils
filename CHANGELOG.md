@@ -47,6 +47,9 @@
 
 # auto_mongo.py 
 
+## 1.1
+- add sort to MongoCRUB.read()
+
 ## 1.0 
-- easy connection
-- basic CRUD functionalities
+- MongoDB: easy connection
+- MongoCRUD: basic CRUD functionalities
