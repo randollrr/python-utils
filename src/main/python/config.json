@@ -4,5 +4,13 @@
     "app-logs": null,
     "log-level": "DEBUG",
     "log-stdout": true
+  },
+  "mongo.dev": {
+    "username": "username",
+    "password": "password",
+    "host": "host.domain",
+    "port": 27017,
+    "database": "testdb",
+    "authenticationDatabase": "testdb"
   }
 }

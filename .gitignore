@@ -1,4 +1,5 @@
 # environment
+.devcontainer/
 .idea/
 .project
 .pytest_cache/
