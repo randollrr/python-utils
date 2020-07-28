@@ -181,9 +181,10 @@ class FileManager:
             # -- apply filter
             if action == 'list':
                 return t
-            if action == 'latest':
+            if action == 'latest' and t:
+                print(t)
                 final = t[len(t)-1][0], t[len(t)-1][1]
-            elif action == 'oldest':
+            elif action == 'oldest' and t:
                 final = t[0][0], t[0][1]
             if final:
                 r = final[0], final[1]
