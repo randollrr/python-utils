@@ -1,26 +1,29 @@
 # environment
+.dart_tool/
 .devcontainer/
+.env
+env/
 .idea/
 .project
 .pytest_cache/
 __pycache__/
 .settings/
-.vscode/
-env/
 tmp/
 venv/
+.vscode/
 
 # extensions
 *.log
 *.pyc
 
 # project
-target/
 *.csv*
 *.tar
 *.tar.gz
+build/
 build.sbt
 build.properties
+target/
 
 # exceptions
 auto_mysql.py
