@@ -8,9 +8,17 @@
   "mongo.dev": {
     "username": "username",
     "password": "password",
-    "host": "host.domain",
+    "host": "db1.host1.domain",
     "port": 27017,
-    "database": "testdb",
-    "authenticationDatabase": "testdb"
+    "database": "test_db",
+    "authenticationDatabase": "test_db"
+  },
+  "mongo.prod": {
+    "username": "username",
+    "password": "password",
+    "host": "db2.host2.domain",
+    "port": 27017,
+    "database": "prod_db",
+    "authenticationDatabase": "prod_db"
   }
 }
