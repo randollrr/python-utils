@@ -76,6 +76,15 @@ class FileManager:
         """
         return self.ts_sorted_file('latest', directory=directory, fn_pattern=fn_pattern)
 
+    def ls(self, directory=None, fn_pattern=None):
+        """
+        See ts_based_file().
+        :param directory: provide path
+        :param fn_pattern: filter based on filename pattern
+        :return: directory, filename, timestamp
+        """
+        return self.ts_sorted_file('list', directory=directory, fn_pattern=fn_pattern)
+
     @staticmethod
     def move(fn, src, dst):
         """
