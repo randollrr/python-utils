@@ -2,7 +2,7 @@ service:
   app-name: app
   app-logs: /var/log
   log-level: DEBUG
-  # log-stdout: true
+  log-stdout: true
 # sendmail:
 #   path: /usr/sbin/sendmail
 #   from: no-reply@example.com
