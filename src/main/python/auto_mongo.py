@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 frictionlessly.
 """
 __authors__ = ['randollrr']
-__version__ = '1.1.1'
+__version__ = '1.2'
 
 import json
 import os
@@ -46,8 +46,8 @@ class MongoDB:
                 authSource=db_config['authenticationDatabase'])
             # -- setup database
             
-            if db:
-                self.db = self.client[db]
+            if self.db:
+                self.db = self.client[self.db]
             else:
                 if db_config.get('database'):
                     self.db = self.client[db_config['database']]
@@ -314,3 +314,7 @@ class MongoCRUD:
                 self.collection = self.connector.db[collection]    
         if self.connector.connected:
             log.debug('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
+
+
+db = MongoDB()
+dao = MongoCRUD(db=db)
