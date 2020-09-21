@@ -8,7 +8,7 @@ for many apps or scripts. A generic API to access:
 
 """
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.12'
+__version__ = '1.13'
 
 import json
 import logging
@@ -60,12 +60,14 @@ class Config:
                 self.read()
 
     def file_type(self):
-        # -- check file type: json or yaml
+        """
+        Check file type: json or yaml
+        """
         ft = 'json'
-        if len(self.file.split('.')) > 1:
-            t = self.file.split('.')[1]
-            if t == 'yaml' or t == 'yml':
-                ft = 'yaml'
+        
+        t = self.file.split('.')[len(self.file.split('.'))-1]
+        if t == 'yaml' or t == 'yml':
+            ft = 'yaml'
         return ft
 
     def __getitem__(self, item):
