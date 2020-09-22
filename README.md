@@ -1,5 +1,5 @@
 # python-utils
-General scripts
+General purpose scripts
 
 - [auto_utils](auto_utils.md): add support for log, config, etc...
 - [auto_mongo](auto_mongo.md): add basic MongoDB CRUD support to your script/app

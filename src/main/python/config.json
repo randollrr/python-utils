@@ -1,4 +1,4 @@
-{  
+{
   "service": {
     "app-name": "app",
     "app-logs": null,
@@ -6,17 +6,17 @@
     "log-stdout": true
   },
   "mongo.dev": {
-    "username": "username",
-    "password": "password",
-    "host": "db1.host1.domain",
+    "username": null,
+    "password": null,
+    "host": "localhost",
     "port": 27017,
     "database": "test_db",
-    "authenticationDatabase": "test_db"
+    "authenticationDatabase": ""
   },
   "mongo.prod": {
     "username": "username",
     "password": "password",
-    "host": "db2.host2.domain",
+    "host": "db.host.domain",
     "port": 27017,
     "database": "prod_db",
     "authenticationDatabase": "prod_db"
