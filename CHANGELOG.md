@@ -3,6 +3,7 @@
 - auto_mongo
 - auto_fm
 
+
 ## auto_utils.py
 
 ### 1.11
@@ -33,8 +34,13 @@
 
 ## auto_mongo.py 
 
-[ ### 1.2 ]
+[ ### 1.3 ]
 [ - add aggregation to MongoCRUD.read() ]
+
+### 1.2
+- added default dao and db objects to module
+- renamed _update_session() to cd() to ease access
+- cleaned INFO logging.
 
 ### 1.1.1
 - added sort to MongoCRUB.read()

@@ -1,6 +1,6 @@
 """
 Library to quickly/easily connect to MongoDB and using CRUD functionalities
-frictionlessly.
+in a frictionless way.
 """
 __authors__ = ['randollrr']
 __version__ = '1.2'
@@ -9,10 +9,10 @@ import json
 import os
 
 from pymongo import MongoClient
+from pymongo.cursor import Cursor
 from bson import ObjectId, SON
 
-from auto_utils import config
-from auto_utils import log
+from auto_utils import config, log
 
 
 class MongoDB:
@@ -21,7 +21,7 @@ class MongoDB:
 
         self.client = None
         self.db = None
-        self.collection = None
+        self.collection = collection
         self.connected = False
 
         if db_config is None:
@@ -90,6 +90,21 @@ class MongoCRUD:
         self.connector = MongoDB(collection=collection, db=db)
         self.collection = self.connector.collection
 
+    def cd(self, collection=None, db=None):
+        """
+        Change collection and/or database.
+        :param collection: collection name to change
+        :param db: database name to change (collecion is required)
+        """
+        if collection and self.connector.connected:
+            if db:
+                self.collection = self.connector.db.client[db][collection]
+                log.debug('Using database: {}'.format(self.connector.db.name))
+            else:
+                self.collection = self.connector.db[collection]    
+                log.debug('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
+
+    
     def create(self, doc=None, collection=None, db=None):
         """
         Insert object(s).
@@ -97,8 +112,8 @@ class MongoCRUD:
         :param collection: to change collection/table
         :param db: to change database
         """
-        log.info('inserting doc: {}'.format(doc))
-        self._update_session(collection, db)
+        self.cd(collection, db)
+        count = 0
         r = None
         c = 204
         m = 'Nothing happened.'
@@ -107,17 +122,17 @@ class MongoCRUD:
             ins = None
             if isinstance(doc, dict):
                 ins = self.collection.insert_one(doc)
-                r = [str(ins.inserted_id)]
-                log.info('inserted: {}, {}'.format(ins.acknowledged, ins.inserted_id))
+                r = self._decode_objectid(ins.inserted_id)
+                count = 1 if r else 0
             elif isinstance(doc, list):
                 ins = self.collection.insert_many(doc)
-                r = [str(i) for i in ins.inserted_ids]
-                log.info('inserted: {}, {}'.format(ins.acknowledged, r))
-            if r:
+                r = ins.inserted_ids
+                count = len(r)
+            if r and ins:
                 c = 201
                 m = 'Data inserted.'
+                log.info('create_count: {}, create_ack: {}'.format(count, ins.acknowledged))
         except Exception as e:
-            r = doc
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
@@ -133,7 +148,7 @@ class MongoCRUD:
         :param aggr_type: 'count', 'sum' i.e. aggr_type={'count': 'salary'} or aggr_type={'sum': 'salary'}
         :param like: use find() with $regex i.e. like={'employe_name': '^Ran'}
         """
-        self._update_session(collection, db)
+        self.cd(collection, db)
         r = None
         c = 404
         m = 'No data returned.'
@@ -156,7 +171,7 @@ class MongoCRUD:
             #     for k in projection:
             #         statement += [(k, projection[k])]
 
-            log.debug('retrieving doc(s) like: {}'.format(statement))
+            log.debug('retrieving doc(s) like: {}'.format(dict(statement)))
             
             
             if isinstance(aggr_cols, list):
@@ -175,7 +190,6 @@ class MongoCRUD:
             else:
                 data = self.collection.find(SON(statement))
 
-                
             # -- collect result
             for _ in data:
                 doc_count += 1
@@ -184,7 +198,7 @@ class MongoCRUD:
                 r = data
                 c = 200
                 m = 'OK'
-            log.info('data: {} doc(s).'.format(doc_count))
+            log.info('read_count: {}'.format(doc_count))
         
         except Exception as e:
             r = statement
@@ -201,8 +215,8 @@ class MongoCRUD:
         :param like: use filter with $regex i.e. like={'employe_name': '^Ran'}
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
         """
-        log.info('updating: {}'.format(doc))
-        self._update_session(collection, db)
+        log.debug('update: {}'.format(doc))
+        self.cd(collection, db)
         r = []
         c = 204
         m = 'Nothing happened.'
@@ -211,8 +225,8 @@ class MongoCRUD:
             if isinstance(doc, dict):
                 self._encode_objectid(doc)
                 obj = self.collection.replace_one({'_id': doc['_id']}, doc)
-                log.info('update(): ack: {}, match_count: {}, modified_count: {}, doc: {}'.format(
-                    obj.acknowledged, obj.matched_count, obj.modified_count, doc))
+                log.info('update_match_count: {}, update_mod: {}, update_ack: {}'.format(
+                    obj.matched_count, obj.modified_count, obj.acknowledged))
                 c = 200
                 m = 'Document(s) updated.'
         except Exception as e:
@@ -234,19 +248,19 @@ class MongoCRUD:
             delete({'person.fname': 'Randoll'}   # delete document where {'person': {'fname': 'Randoll'}}
             delete({})                           # delete all in collection, not allowed
         """
-        log.info('deleting doc(s) like: {}'.format(where))
-        self._update_session(collection, db)
+        self.cd(collection, db)
         r = []
         c = 204
         m = 'Nothing happened.'
         
+        log.debug('delete doc(s) like: {}'.format(where))
         try:
             if where:
                 if isinstance(where, dict):
                     where = [where]
                 
+                statement = []
                 if isinstance(where, list):
-                    statement = []
                     for f in where:
                         if not isinstance(f, dict):
                             statement += [self._encode_objectid({'_id': f})]
@@ -256,10 +270,10 @@ class MongoCRUD:
                     
                     for s in statement:
                         obj = self.collection.delete_one(s)
-                        log.info('delete: ack: {}, delete_count: {}, doc: {}'.format(obj.acknowledged, obj.deleted_count, s))
-                r = statement
+                        log.info('delete_count: {}, delete_ack: {}'.format(obj.deleted_count, obj.acknowledged))
+                        r += [{'statement': s, 'delete_count': obj.deleted_count, 'delete_ack':obj.acknowledged}]
                 c = 410
-                m = 'Item(s) delete.'
+                m = 'Item(s) deletion have been executed.'
         except Exception as e:
             r = where
             c = 500
@@ -296,24 +310,19 @@ class MongoCRUD:
         r = {'data': []}
 
         if data:
-            if isinstance(data, str):
-                r['data'] = list(self._decode_objectid(data))
-            else:
+            if type(data) in [int, str, dict]:
+                r['data'] += [self._decode_objectid(data)]
+            elif type(data) in [Cursor, list]:
                 for d in data:
                     r['data'] += [self._decode_objectid(d)]
+            else:
+                r['data'] = []
+                rcode = 500
+                message = 'Could not format data for response object ({}).'.format(type(data))
         
         r['status'] = {'code': rcode, 'message': message, 'records': len(r['data'])}
         log.debug('response: {}'.format(r))
         return r
-    
-    def _update_session(self, collection=None, db=None):
-        if collection:
-            if db:
-                self.collection = self.connector.db.client[db][collection]
-            else:
-                self.collection = self.connector.db[collection]    
-        if self.connector.connected:
-            log.debug('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
 
 
 db = MongoDB()
