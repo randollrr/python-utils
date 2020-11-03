@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.2'
+__version__ = '1.2.2'
 
 import json
 import os
@@ -17,13 +17,19 @@ from auto_utils import config, log
 
 class MongoDB:
     def __init__(self, db_config=None, collection=None, db=None):
-        global config
+        """
+        Create database connection.
 
-        self.client = None
-        self.db = None
+        :param db_config: configuration object map
+        :param collection: existing pymongo collection object
+        :param db: existing pymongo db object
+        """
         self.collection = collection
+        self.db = db
+        self.client = None
         self.connected = False
 
+        # -- database basic config
         if db_config is None:
             if os.environ.get('APP_RUNTIME_CONTEXT') == 'dev':
                 db_config = config['mongo.dev']
@@ -44,24 +50,22 @@ class MongoDB:
                 username=db_config['username'],
                 password=db_config['password'],
                 authSource=db_config['authenticationDatabase'])
-            # -- setup database
             
-            if self.db:
-                self.db = self.client[self.db]
+        # -- setup database            
+        if not self.db:
+            if db_config.get('database'):
+                self.db = self.client[db_config['database']]
             else:
-                if db_config.get('database'):
-                    self.db = self.client[db_config['database']]
-                else:
-                    self.db = self.client['admin']
-            # -- setup collection
-            if collection:
-                self.collection = self.db[collection]
+                self.db = self.client['test_db']
+
+        # -- setup collection
+        if not self.collection and self.db:
+            if db_config.get('collection'):
+                self.collection = self.db[db_config['collection']]
             else:
-                if db_config.get('collection'):
-                    self.collection = self.db[db_config['collection']]
-                else:
-                    self.collection = self.db['system.version']
+                self.collection = self.db['test']
             self.connected = True
+        
         if self.connected:
             log.info('CONNECTED to {}@{}'.format(self.db.name, db_config['host']))
         else:
@@ -99,10 +103,10 @@ class MongoCRUD:
         if collection and self.connector.connected:
             if db:
                 self.collection = self.connector.db.client[db][collection]
-                log.debug('Using database: {}'.format(self.connector.db.name))
+                log.info('Using database: {}'.format(self.connector.db.name))
             else:
                 self.collection = self.connector.db[collection]    
-                log.debug('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
+                log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
 
     
     def create(self, doc=None, collection=None, db=None):
@@ -326,4 +330,4 @@ class MongoCRUD:
 
 
 db = MongoDB()
-dao = MongoCRUD(db=db)
+dao = MongoCRUD(db=db.db)

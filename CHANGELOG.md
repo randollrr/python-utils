@@ -5,6 +5,7 @@
 
 
 ## auto_utils.py
+---
 
 ### 1.11
 - added missing initialization to log.log_filename and made private (log._log_filename)
@@ -33,9 +34,15 @@
 
 
 ## auto_mongo.py 
+---
 
 [ ### 1.3 ]
 [ - add aggregation to MongoCRUD.read() ]
+
+
+### 1.2.2
+- fix issues w/ MongoDB constructor and to use `db` and `collection` object passed to it
+
 
 ### 1.2
 - added default dao and db objects to module
@@ -52,6 +59,7 @@
 
 
 ## auto_fm.py
+---
 
 ### 2.2 
 - removed python 3.7 string formating

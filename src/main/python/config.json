@@ -11,6 +11,7 @@
     "host": "localhost",
     "port": 27017,
     "database": "test_db",
+    "_collection": "test",
     "authenticationDatabase": ""
   },
   "mongo.prod": {
