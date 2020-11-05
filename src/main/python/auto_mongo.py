@@ -10,13 +10,14 @@ import os
 
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
+from pymongo.database import Collection, Database
 from bson import ObjectId, SON
 
 from auto_utils import config, log
 
 
 class MongoDB:
-    def __init__(self, db_config=None, collection=None, db=None):
+    def __init__(self, db_config=None, collection=None, db=None, collection_obj=None, db_obj=None):
         """
         Create database connection.
 
@@ -24,13 +25,25 @@ class MongoDB:
         :param collection: existing pymongo collection object
         :param db: existing pymongo db object
         """
-        self.collection = collection
-        self.db = db
+        self.collection = collection_obj
+        self.db = db_obj
+        collection_name = collection
+        db_name = db
         self.client = None
         self.connected = False
 
+        # -- validate passing objects
+        if db_obj and isinstance(db_obj, Database):
+            self.client = db_obj.client
+        if db_obj and not isinstance(db_obj, Database):
+            log.error(f"db_obj: {type(db_obj)} is not a Database object")
+            return
+        if collection_obj and not isinstance(collection_obj, Collection):
+            log.error(f"collection_obj: {type(collection_obj)} is not a Collection object")
+            return
+
         # -- database basic config
-        if db_config is None:
+        if db_config is None and not self.db and not self.collection:
             if os.environ.get('APP_RUNTIME_CONTEXT') == 'dev':
                 db_config = config['mongo.dev']
                 self.environ = 'dev'
@@ -52,24 +65,32 @@ class MongoDB:
                 authSource=db_config['authenticationDatabase'])
             
         # -- setup database            
-        if not self.db:
+        if not db_name and not self.db:
             if db_config.get('database'):
                 self.db = self.client[db_config['database']]
             else:
                 self.db = self.client['test_db']
+        elif db_name and not self.db:
+            self.db = self.client[db_name]
 
         # -- setup collection
-        if not self.collection and self.db:
-            if db_config.get('collection'):
+        if not collection_name and self.db:
+            if db_config and db_config.get('collection'):
                 self.collection = self.db[db_config['collection']]
-            else:
+            elif not self.collection:
                 self.collection = self.db['test']
-            self.connected = True
+        elif collection_name and self.db:
+            self.collection = self.db[collection_name]
         
+        self.status()
         if self.connected:
-            log.info('CONNECTED to {}@{}'.format(self.db.name, db_config['host']))
+            if collection_obj and db_obj:
+                log.info('Using existing connection: '.format(self.db.name, self.client.HOST))
+            else:
+                log.info('CONNECTED to {}@{}'.format(self.db.name, self.db.host))
+
         else:
-            log.info('NOT CONNECTED. (db={}, host={})'.format(db_config.get('database'), db_config.get('host')))
+            log.info('NOT CONNECTED.')
 
     def close(self):
         if self.status():
@@ -79,7 +100,7 @@ class MongoDB:
 
     def status(self):
         r = False
-        if self.client.server_info():
+        if self.client and self.client.server_info():
             if isinstance(self.db.name, str):
                 r = self.connected = True
         return r
@@ -90,8 +111,8 @@ class MongoCRUD:
     Provide basic CRUD functionalities.
     """
 
-    def __init__(self, collection=None, db=None):
-        self.connector = MongoDB(collection=collection, db=db)
+    def __init__(self, collection=None, db=None, collection_obj=None, db_obj=None):
+        self.connector = MongoDB(collection=collection, db=db, collection_obj=collection_obj, db_obj=db_obj)
         self.collection = self.connector.collection
 
     def cd(self, collection=None, db=None):
@@ -330,4 +351,4 @@ class MongoCRUD:
 
 
 db = MongoDB()
-dao = MongoCRUD(db=db.db)
+dao = MongoCRUD(collection_obj=db.collection, db_obj=db.db)

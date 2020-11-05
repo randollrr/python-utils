@@ -2,23 +2,22 @@ import json
 
 import pytest
 
-from auto_mongo import db, dao
+from auto_mongo import db, dao, MongoDB, MongoCRUD
 from auto_utils import log
 
 log.reset()
 object_ids = {}
 
-@pytest.fixture
-def dbms():
-    dao.cd('test', 'test_db')
-    yield {'db': db, 'dao': dao}
+
+def test_connection():
+    assert db.status()
+    assert dao.connector.connected
+    assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
+    assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
+    dao.connector.close()
+    assert not dao.connector.connected
 
 
-def test_connection(dbms):
-    assert dbms['db'].status()
-    assert not dbms['dao'].connector.close()
-
-# @pytest.mark.skip
 def test_create():
     assert dao.create({'_id': 'randollrr', 'name': 'Randoll Revers', 'gender': 'M', 'age': None})
     
@@ -69,17 +68,17 @@ def test_read():
     assert dao.read({'_test': '_test'})['status']['code'] == 404
     assert dao.read({}, sort={'_id': -1})['status']['code'] == 200
 
-
-@pytest.mark.skip('Not implemented yet.')
+@pytest.mark.skip
 def test_projection():
     data = dao.read(
         where={'_id': 1}, 
         collection='test',
         projection={'_id': False, 'name': True, 'type': True, 'status': True})['data'][0]
-    assert data.keys() == ['name', 'type', 'status']
+
+    print(list(data.keys()))
+    assert list(data.keys()) == ['name', 'type', 'status']
 
 
-# @pytest.mark.skip
 def test_update():
     data = dao.read({'_id': 4})['data'][0]
     for d in data['points']:
