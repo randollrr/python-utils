@@ -68,7 +68,7 @@ def test_read():
     assert dao.read({'_test': '_test'})['status']['code'] == 404
     assert dao.read({}, sort={'_id': -1})['status']['code'] == 200
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_projection():
     data = dao.read(
         where={'_id': 1}, 

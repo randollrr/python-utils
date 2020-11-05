@@ -40,6 +40,10 @@
 [ - add aggregation to MongoCRUD.read() ]
 
 
+### 1.2.3
+- added support projections on read()
+
+
 ### 1.2.2
 - fix issues w/ MongoDB constructor and to use `db` and `collection` object passed to it
 - added support for `collection` and `db` objects initialization in MongoDB and MongoCRUD constructors
