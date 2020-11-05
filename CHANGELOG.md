@@ -42,6 +42,7 @@
 
 ### 1.2.2
 - fix issues w/ MongoDB constructor and to use `db` and `collection` object passed to it
+- added support for `collection` and `db` objects initialization in MongoDB and MongoCRUD constructors
 
 
 ### 1.2
