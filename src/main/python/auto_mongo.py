@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.2.2'
+__version__ = '1.2.3'
 
 import json
 import os
@@ -181,7 +181,7 @@ class MongoCRUD:
         statement = []
         
         try:
-            # -- build statement
+            # -- build statement            
             if where:
                 self._encode_objectid(where)
                 for k in where:
@@ -189,31 +189,27 @@ class MongoCRUD:
                         statement += [(k, {'$exist': False})]
                     else:
                         statement += [(k, where[k])]
+            else:
+                statement += [('_id', {'$exists': True})]
+    
+            # if isinstance(aggr_cols, list):
+            #     if isinstance(aggr_type, dict):
+            #         pass  # sum
+            #     else:
+            #         pass  # count
+            
+            log.info('retrieving doc(s) like: {}{}'.format(dict(statement), \
+                ', {}'.format(projection) if projection else ''))
 
-            # if isinstance(projection, dict):
-            #     if not statement:
-            #         statement += [('_id', {'$exists': True})]
-            #     for k in projection:
-            #         statement += [(k, projection[k])]
-
-            log.debug('retrieving doc(s) like: {}'.format(dict(statement)))
-            
-            
-            if isinstance(aggr_cols, list):
-                if isinstance(aggr_type, dict):
-                    pass  # sum
-                else:
-                    pass  # count
-            
             # -- execute statement
             if isinstance(sort, dict):
                 s_list = []
                 for k in sort:
                     s_list += [(k, sort[k])]
-                data = self.collection.find(SON(statement)).sort(s_list)
+                data = self.collection.find(SON(statement), projection).sort(s_list)
                 del s_list
             else:
-                data = self.collection.find(SON(statement))
+                data = self.collection.find(SON(statement), projection)
 
             # -- collect result
             for _ in data:
