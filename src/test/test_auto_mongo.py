@@ -13,6 +13,7 @@ def test_connection():
     assert db.status()
     assert dao.connector.connected
     assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
+    assert MongoDB(db_obj=dao.connector.db).status()
     assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
     dao.connector.close()
     assert not dao.connector.connected

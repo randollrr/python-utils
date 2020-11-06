@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.2.3'
+__version__ = '1.2.4'
 
 import json
 import os
@@ -36,10 +36,10 @@ class MongoDB:
         if db_obj and isinstance(db_obj, Database):
             self.client = db_obj.client
         if db_obj and not isinstance(db_obj, Database):
-            log.error(f"db_obj: {type(db_obj)} is not a Database object")
+            log.error('db_obj: {} is not a Database object'.format(type(db_obj)))
             return
         if collection_obj and not isinstance(collection_obj, Collection):
-            log.error(f"collection_obj: {type(collection_obj)} is not a Collection object")
+            log.error('collection_obj: {} is not a Collection object'.format(type(collection_obj)))
             return
 
         # -- database basic config
@@ -85,10 +85,9 @@ class MongoDB:
         self.status()
         if self.connected:
             if collection_obj and db_obj:
-                log.info('Using existing connection: '.format(self.db.name, self.client.HOST))
+                log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.HOST))
             else:
-                log.info('CONNECTED to {}@{}'.format(self.db.name, self.db.host))
-
+                log.info('CONNECTED to {}@{}'.format(self.db.name, self.client.HOST))
         else:
             log.info('NOT CONNECTED.')
 
