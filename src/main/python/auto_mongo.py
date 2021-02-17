@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.2.4'
+__version__ = '1.2.5'
 
 import json
 import os
@@ -27,8 +27,8 @@ class MongoDB:
         """
         self.collection = collection_obj
         self.db = db_obj
-        collection_name = collection
-        db_name = db
+        collection_name = collection; del collection  # -- to avoid ambiguity
+        db_name = db; del db  # -- to avoid ambiguity
         self.client = None
         self.connected = False
 
@@ -82,12 +82,11 @@ class MongoDB:
         elif collection_name and self.db:
             self.collection = self.db[collection_name]
         
-        self.status()
-        if self.connected:
+        if self.status():
             if collection_obj and db_obj:
-                log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.HOST))
+                log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.address))
             else:
-                log.info('CONNECTED to {}@{}'.format(self.db.name, self.client.HOST))
+                log.info('CONNECTED to {}@{}'.format(self.db.name, self.client.address))
         else:
             log.info('NOT CONNECTED.')
 
