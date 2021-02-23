@@ -60,6 +60,8 @@ res = dao.delete([{'_id': '<object_id>'}, {'_id': '<object_id>', 'field_name': '
 res = dao.delete(where=['<object_id1>', '<object_id2>', '<object_id3>', ])
 ```
 
+> <b><u>Note</u></b>: The `dao` object will always keep state from the function that was called. Use `dao.cd('collection')` to switch collection or `dao.cd('collection', 'database')` to switch collection and database.
+
 <br><br>
 
 ## Configuration
@@ -95,5 +97,5 @@ A `config.json` file is required with the following minimal parameters:
 
 ```
 
-Note: Parameter `"collection": <collection_name>` can be omitted in this config file. And `APP_RUNTIME_CONTEXT` environment variable can be set to `dev` to enable `mongo.dev`, `qa` for `mongo.qa` and `prod` for the `mongo.prod` section -- `prod` is also assumed by default.
+> <b><u>Note</u></b>: Parameter `"collection": <collection_name>` can be omitted in this config file. And `APP_RUNTIME_CONTEXT` environment variable can be set to `dev` to enable `mongo.dev`, `qa` for `mongo.qa` and `prod` for the `mongo.prod` section -- `prod` is also assumed by default.
 
