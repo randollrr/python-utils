@@ -95,5 +95,5 @@ A `config.json` file is required with the following minimal parameters:
 
 ```
 
-Note: that `"collection": <collection_name>` can be ommited.
+Note: Parameter `"collection": <collection_name>` can be ommited in this config file. And `APP_RUNTIME_CONTEXT` environment variable can be set to to `dev` to enable `mongo.dev`, `qa` for `mongo.qa` and `prod` for the `mongo.prod` section -- `prod` is assumed by default.
 
