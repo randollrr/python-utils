@@ -7,9 +7,8 @@ To use this library all you need to do is to import it from your directory path.
 ```python
 from auto_mongo import MongoCRUD
 
-dao = MongoCRUD()  # -- all config.json parameters will be used
-or 
-dao = MongoCRUD('collection_name', 'database_name')
+dao = MongoCRUD()  # all config.json parameters will be used
+dao = MongoCRUD('collection_name', 'database_name')  # or override collection and database parameters
 ```
 
 Note: `auto_mongo.py` currently has `auto_utils.py` as a dependency.
@@ -24,6 +23,7 @@ To create a new record of document inside a collection in the mongodb database, 
 
 ```python
 res = dao.create({'new': 'data'})
+res = dao.create(doc={'new': 'data'}, collection='collection_name', db='db_name')
 ```
 
 ### Read
