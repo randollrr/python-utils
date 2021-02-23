@@ -60,7 +60,7 @@ res = dao.delete([{'_id': '<object_id>'}, {'_id': '<object_id>', 'field_name': '
 res = dao.delete(where=['<object_id1>', '<object_id2>', '<object_id3>', ])
 ```
 
-> <b><u>Note</u></b>: The `dao` object will always keep state from the function that was called. Use `dao.cd('collection_name')` to switch collection or `dao.cd('collection_name', 'database_name')` to switch collection and database.
+> <b><u>Note</u></b>: The `dao` object will always keep state from the function that was called last. Use `dao.cd('collection_name')` to switch collection or `dao.cd('collection_name', 'database_name')` to switch collection and database.
 
 <br><br>
 
