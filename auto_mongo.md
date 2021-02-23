@@ -1,6 +1,6 @@
 # auto_mongo
 
-A typical CRUD library for mongoDB that can be useful for most projects -- built on top of pymongo.
+A typical CRUD library for mongoDB that can be useful for most projects, but initial from my home automation project -- built on top of pymongo.
 
 To use this library all you need to do is to import it from your directory path.
 
