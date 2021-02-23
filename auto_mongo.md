@@ -47,7 +47,7 @@ Update one document at a time.
 
 ```python
 res = dao.update({'_id': '<object_id>', 'new': 'data'})
-res = dao.update(where={'_id': '<object_id>', 'new': 'data'}, collection='collection_name', db='db_name')
+res = dao.update(doc={'_id': '<object_id>', 'new': 'data'}, collection='collection_name', db='db_name')
 ```
 
 ### Delete
