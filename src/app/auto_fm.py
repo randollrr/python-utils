@@ -4,7 +4,7 @@ import re
 from auto_utils import log
 
 __authors__ = ['randollrr']
-__version__ = '2.3'
+__version__ = '2.3.1'
 
 
 class FileManager:
@@ -19,13 +19,14 @@ class FileManager:
         self.arc = archive
 
     @staticmethod
-    def del_files(path, files):
+    def del_files(path: str , files: list) -> bool:
         """
         Delete list of files provided.
         :param path: directory (only)
         :param files: [list of files]
         :return: True or False
         """
+        r = False
         if FileManager.exists(path):
             if type(files) is list:
                 for fn in files:
@@ -33,9 +34,9 @@ class FileManager:
                         os.remove(os.path.join(path, fn))
                         r = True
                     except Exception as e:
-                        r = False
                         log.error("Couldn't remove file: {}".format(fn))
                         log.debug(e)
+        return r
 
     @staticmethod
     def dir_struct(path, known_dir=None):
@@ -139,7 +140,7 @@ class FileManager:
         Function to apply retention policy.
         :param bp: base path
         :param fn: file names containing substring
-        :param ret_d: number of files to retain 
+        :param ret_d: number of files to retain
         """
         if ret_d > 0:
             fm = FileManager(bp)
