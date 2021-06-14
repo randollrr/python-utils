@@ -1,6 +1,6 @@
 # environment
 .dart_tool/
-.devcontainer/
+# .devcontainer/
 .env
 env/
 .idea/
