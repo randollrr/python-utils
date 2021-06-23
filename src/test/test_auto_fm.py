@@ -131,11 +131,11 @@ def test_dirstruct_bucket(_g):
     fm = _g['fm']
     pwd = _g['pwd']
 
-    fm.setbucket('example')
+    fm.setbucket('39c65e13bcb0')
     fm.dir_struct(pwd)
 
     fm.touch(f"{fm.INPUT}/result.txt")
-    res = fm.ls(f"{pwd}/fm/input/example/", fn_only=True)
+    res = fm.ls(f"{pwd}/fm/input/39c65e13bcb0", fn_only=True)
     assert res  == ['result.txt']
     assert fm.del_files(f"{fm.INPUT}", ['result.txt'])
     assert fm.del_dir(fm.INPUT)
