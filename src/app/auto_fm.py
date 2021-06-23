@@ -12,14 +12,17 @@ class FileManager:
     Implement methods to manipulate file(s) with common automation operations.
     """
 
-    def __init__(self, indir=None, outdir=None, arcdir=None, errdir=None):
+    def __init__(self, indir=None, outdir=None, arcdir=None, errdir=None, \
+        known_dir=None, bucket=None):
+        self.bucket = bucket if bucket else ''
+        self.basedir = './fm'
         self.filename = None
-        # self.bucket = None
+        self.known_dir = known_dir
 
-        self.archive = arcdir
-        self.errored = errdir
-        self.input = indir
-        self.output = outdir
+        self.ARCHIVE = arcdir
+        self.ERRORED = errdir
+        self.INPUT = indir
+        self.OUTPUT = outdir
 
     def del_dir(self, path):
         """
@@ -30,9 +33,14 @@ class FileManager:
         r = False
         if self.exists(path):
             try:
+                if self.basedir == '{}/fm'.format(path):
+                    os.rmdir(self.basedir)
+                if self.bucket and self.bucket in path:
+                    os.rmdir(path)
+                    path = path.replace(self.bucket, '')
                 os.rmdir(path)
-                log.info('remove dir: {}'.format(path))
                 r = True
+                log.info('remove dir: {}'.format(path))
             except Exception as e:
                     log.error("Couldn't remove directory: {}".format(e))
         return r
@@ -70,17 +78,36 @@ class FileManager:
         :return: True or False
         """
         r = False
-        if not path:
-            path = '{}/fm'.format(wd())
-        if not known_dir:
-            known_dir = ['archive', 'errored', 'input', 'output']
 
-        log.info('check directory structure for: {}'.format(path))
+        def update_path(_p, _np):
+            if _p == 'archive':
+                self.ARCHIVE = _np
+            elif _p == 'errored':
+                self.ERRORED = _np
+            elif _p == 'input':
+                self.INPUT = _np
+            elif _p == 'output':
+                self.OUTPUT = _np
+
+        if path:
+            self.basedir = '{}/fm'.format(path)
+        u_path = False
+        if not self.known_dir:
+            self.known_dir = ['archive', 'errored', 'input', 'output']
+            u_path = True
+        if known_dir:
+            self.known_dir = known_dir
+
+        log.info('validate directory structure for: {}'.format(self.basedir))
         try:
-            for d in known_dir:
-                if not os.path.exists(os.path.join(path, d)):
-                    log.info('creating: {}/{}'.format(path, d))
-                    os.makedirs(os.path.join(path, d), exist_ok=True)
+            i = 0
+            for d in self.known_dir:
+                n_path = os.path.join(self.basedir, d, self.bucket)
+                if u_path:
+                    update_path(d, n_path)
+                if not os.path.exists(n_path):
+                    log.info('creating: {}'.format(n_path))
+                    os.makedirs(n_path, exist_ok=True)
             r = True
         except Exception as e:
             log.info("Couldn't setup directory structure.\n{}".format(e))
@@ -152,7 +179,7 @@ class FileManager:
                 ret = do_move(fnum)
             return ret
 
-        # -- move files recursively
+        # -- move files (recursively avoid name conflict)
         if src and dst:
             r = do_move()
 
@@ -196,6 +223,19 @@ class FileManager:
 
             log.info('applied retention policy: {}'.format(directory))
 
+    def setbucket(self, dirname):
+        """
+        Add a "bucket" to directory structure.
+        :param dirname: name to set the subdirectory
+        """
+        if not self.bucket:
+            self.bucket = dirname
+            # self.basedir = '{}/{}'.format(self.basedir, self.bucket)
+            log.info('Bucket is now set to: {}.'.format(self.bucket))
+        else:
+            log.info('Buckets cannot be reset to a different name ({}). '
+                     'Currently set to "{}"'.format(dirname, self.bucket))
+
     def touch(self, fn, time=None):
         with open(fn, 'a') as f:
             os.utime(f.name, time)
@@ -211,8 +251,8 @@ class FileManager:
         """
         r = []
 
-        if not directory and self.input:
-            directory = self.input
+        if not directory and self.INPUT:
+            directory = self.INPUT
 
         # -- build file list
         log.debug('directory: {}'.format(directory))
