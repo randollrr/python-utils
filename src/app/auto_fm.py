@@ -1,10 +1,10 @@
 import os
 import re
 
-from auto_utils import log, wd
+from auto_utils import deprecated, log, wd
 
 __authors__ = ['randollrr']
-__version__ = '2.4'
+__version__ = '2.4.1'
 
 
 class FileManager:
@@ -127,7 +127,7 @@ class FileManager:
         :param fn_only: returns list [] of filenames only
         :return: directory, filename, timestamp
         """
-        r = self.ts_sorted_file(
+        r = self._ts_sorted_file(
             'latest', directory=directory, fn_pattern=fn_pattern, fn_only=fn_only)
         if fn_only and len(r) > 0:
             return r[0]
@@ -141,7 +141,7 @@ class FileManager:
         :param fn_only: returns list [] of filenames only
         :return: directory, filename, timestamp
         """
-        return self.ts_sorted_file(
+        return self._ts_sorted_file(
             'list', directory=directory, fn_pattern=fn_pattern, fn_only=fn_only)
 
     def move(self, fn, src, dst):
@@ -193,7 +193,7 @@ class FileManager:
         :param fn_only: returns list [] of filenames only
         :return: directory, filename, timestamp
         """
-        r = self.ts_sorted_file(
+        r = self._ts_sorted_file(
             'oldest', directory=directory, fn_pattern=fn_pattern, fn_only=fn_only)
         if fn_only and len(r) > 0:
             return r[0]
@@ -207,7 +207,7 @@ class FileManager:
         :param ret_d: number of files to retain
         """
         if retain > 0:
-            del_list = self.ts_sorted_file('list', directory, \
+            del_list = self._ts_sorted_file('list', directory, \
                 fn_pattern='.*{}.*'.format(fn))
             if len(del_list) > retain:
 
@@ -229,8 +229,8 @@ class FileManager:
         :param dirname: name to set the subdirectory
         """
         if not self.bucket:
-            self.bucket = dirname
-            # self.basedir = '{}/{}'.format(self.basedir, self.bucket)
+            self.bucket = str(dirname)
+            self.dir_struct()
             log.info('Bucket is now set to: {}.'.format(self.bucket))
         else:
             log.info('Buckets cannot be reset to a different name ({}). '
@@ -240,7 +240,11 @@ class FileManager:
         with open(fn, 'a') as f:
             os.utime(f.name, time)
 
+    @deprecated
     def ts_sorted_file(self, req='latest', directory=None, fn_pattern=None, fn_only=False):
+        return self._ts_sorted_file(req, directory, fn_pattern, fn_only)
+
+    def _ts_sorted_file(self, req='latest', directory=None, fn_pattern=None, fn_only=False):
         """
         Look for the latest or oldest modified date from files in directory.
         :param action: 'latest' or 'oldest'
