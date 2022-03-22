@@ -103,9 +103,10 @@ def run_job(job_name: str=None) -> None:
             log.info(f"scheduler: running jobs... [{j}][{config['crontab'][j]}]")
             process = multiprocessing.Process(target=module.run)
             process.start()
-            del module
         except:
             log.error(f"issues encountered while running {j}.")
+        finally:
+            del module
 
 
 def wakeup() -> None:
