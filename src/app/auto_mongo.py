@@ -3,14 +3,14 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.2.5'
+__version__ = '1.3.0'
 
-import json
 import os
 
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
 from pymongo.database import Collection, Database
+from pymongo.errors import ServerSelectionTimeoutError
 from bson import ObjectId, SON
 
 from auto_utils import config, log
@@ -33,17 +33,17 @@ class MongoDB:
         self.connected = False
 
         # -- validate passing objects
-        if db_obj and isinstance(db_obj, Database):
+        if db_obj is not None and isinstance(db_obj, Database):
             self.client = db_obj.client
-        if db_obj and not isinstance(db_obj, Database):
+        if db_obj is not None and not isinstance(db_obj, Database):
             log.error('db_obj: {} is not a Database object'.format(type(db_obj)))
             return
-        if collection_obj and not isinstance(collection_obj, Collection):
+        if collection_obj is not None and not isinstance(collection_obj, Collection):
             log.error('collection_obj: {} is not a Collection object'.format(type(collection_obj)))
             return
 
         # -- database basic config
-        if db_config is None and not self.db and not self.collection:
+        if db_config is None and self.db is None and self.collection is None:
             if os.environ.get('APP_RUNTIME_CONTEXT') == 'dev':
                 db_config = config['mongo.dev']
                 self.environ = 'dev'
@@ -56,16 +56,17 @@ class MongoDB:
             log.info('Using mongo.{} configuration.'.format(self.environ))
         else:
             log.info('Using db_config provided: {}'.format(db_config))
-        
+
         if db_config:
+            db_name = db_config['database']
             self.client = MongoClient(
                 'mongodb://{}:{}/'.format(db_config['host'], db_config['port']),
                 username=db_config['username'],
                 password=db_config['password'],
                 authSource=db_config['authenticationDatabase'])
-            
-        # -- setup database            
-        if not db_name and not self.db:
+
+        # -- setup database
+        if not db_name and self.db is None:
             if db_config.get('database'):
                 self.db = self.client[db_config['database']]
             else:
@@ -74,16 +75,16 @@ class MongoDB:
             self.db = self.client[db_name]
 
         # -- setup collection
-        if not collection_name and self.db:
+        if not collection_name and self.db is not None:
             if db_config and db_config.get('collection'):
                 self.collection = self.db[db_config['collection']]
-            elif not self.collection:
+            elif self.collection is None:
                 self.collection = self.db['test']
-        elif collection_name and self.db:
+        elif collection_name and self.db is not None:
             self.collection = self.db[collection_name]
-        
+
         if self.status():
-            if collection_obj and db_obj:
+            if collection_obj is not None and db_obj is not None:
                 log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.address))
             else:
                 log.info('CONNECTED to {}@{}'.format(self.db.name, self.client.address))
@@ -98,9 +99,12 @@ class MongoDB:
 
     def status(self):
         r = False
-        if self.client and self.client.server_info():
-            if isinstance(self.db.name, str):
-                r = self.connected = True
+        try:
+            if self.client and self.client.server_info():
+                if isinstance(self.db.name, str):
+                    r = self.connected = True
+        except ServerSelectionTimeoutError:
+            pass
         return r
 
 
@@ -124,10 +128,10 @@ class MongoCRUD:
                 self.collection = self.connector.db.client[db][collection]
                 log.info('Using database: {}'.format(self.connector.db.name))
             else:
-                self.collection = self.connector.db[collection]    
+                self.collection = self.connector.db[collection]
                 log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
 
-    
+
     def create(self, doc=None, collection=None, db=None):
         """
         Insert object(s).
@@ -140,9 +144,10 @@ class MongoCRUD:
         r = None
         c = 204
         m = 'Nothing happened.'
-        
+
         try:
             ins = None
+            doc = self._encode_objectid(doc)
             if isinstance(doc, dict):
                 ins = self.collection.insert_one(doc)
                 r = self._decode_objectid(ins.inserted_id)
@@ -152,7 +157,7 @@ class MongoCRUD:
                 r = ins.inserted_ids
                 count = len(r)
             if r and ins:
-                c = 201
+                c = 200
                 m = 'Data inserted.'
                 log.info('create_count: {}, create_ack: {}'.format(count, ins.acknowledged))
         except Exception as e:
@@ -177,11 +182,11 @@ class MongoCRUD:
         m = 'No data returned.'
         doc_count = 0
         statement = []
-        
+
         try:
-            # -- build statement            
+            # -- build statement
             if where:
-                self._encode_objectid(where)
+                where = self._encode_objectid(where)
                 for k in where:
                     if where[k] is None:
                         statement += [(k, {'$exist': False})]
@@ -189,13 +194,13 @@ class MongoCRUD:
                         statement += [(k, where[k])]
             else:
                 statement += [('_id', {'$exists': True})]
-    
+
             # if isinstance(aggr_cols, list):
             #     if isinstance(aggr_type, dict):
             #         pass  # sum
             #     else:
             #         pass  # count
-            
+
             log.info('retrieving doc(s) like: {}{}'.format(dict(statement), \
                 ', {}'.format(projection) if projection else ''))
 
@@ -218,12 +223,19 @@ class MongoCRUD:
                 c = 200
                 m = 'OK'
             log.info('read_count: {}'.format(doc_count))
-        
+
         except Exception as e:
             r = statement
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
+
+    def read1(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
+        r = {}
+        data = self.read(where, collection, db, projection, sort, aggr_cols, aggr_type, like)['data']
+        if data:
+            r = self._decode_objectid(data[0])
+        return r
 
     def update(self, doc=None, collection=None, db=None, where=None, like=None, set=None):
         """
@@ -239,10 +251,10 @@ class MongoCRUD:
         r = []
         c = 204
         m = 'Nothing happened.'
-        
+
         try:
             if isinstance(doc, dict):
-                self._encode_objectid(doc)
+                doc = self._encode_objectid(doc)
                 obj = self.collection.replace_one({'_id': doc['_id']}, doc)
                 log.info('update_match_count: {}, update_mod: {}, update_ack: {}'.format(
                     obj.matched_count, obj.modified_count, obj.acknowledged))
@@ -257,7 +269,7 @@ class MongoCRUD:
     def delete(self, where=None, collection=None, db=None):
         """
         Remove document or object in document.
-        :param statement: document/object to query to remove 
+        :param statement: document/object to query to remove
         :param collection: to change collection/table
         :param db: to change database
         :example:
@@ -271,13 +283,13 @@ class MongoCRUD:
         r = []
         c = 204
         m = 'Nothing happened.'
-        
+
         log.debug('delete doc(s) like: {}'.format(where))
         try:
             if where:
                 if isinstance(where, dict):
                     where = [where]
-                
+
                 statement = []
                 if isinstance(where, list):
                     for f in where:
@@ -286,12 +298,12 @@ class MongoCRUD:
                             r += [str(f)]
                         else:
                             statement += [self._encode_objectid(f)]
-                    
+
                     for s in statement:
                         obj = self.collection.delete_one(s)
                         log.info('delete_count: {}, delete_ack: {}'.format(obj.deleted_count, obj.acknowledged))
-                        r += [{'statement': s, 'delete_count': obj.deleted_count, 'delete_ack':obj.acknowledged}]
-                c = 410
+                        r += [{'statement': self._decode_objectid(s), 'delete_count': obj.deleted_count, 'delete_ack':obj.acknowledged}]
+                c = 200
                 m = 'Item(s) deletion have been executed.'
         except Exception as e:
             r = where
@@ -299,7 +311,7 @@ class MongoCRUD:
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
 
-    
+
     def _decode_objectid(self, o):
         r = o
         if isinstance(o, dict):
@@ -312,19 +324,30 @@ class MongoCRUD:
         else:
             r = str(o)
         return r
-    
+
     def _encode_objectid(self, o):
-        if isinstance(o, dict):
-            if o.get('_id'):
+        r = o.copy()
+
+        def _convert(_objects):
+            _i = 0
+            _r = _objects.copy()
+            for _o in _objects:
                 try:
-                    o['_id'] = ObjectId(o['_id'])
+                    _r[_i]['_id'] = ObjectId(_o['_id'])
                 except:
                     try:
-                        o['_id'] = int(o['_id'])
+                        _r[_i]['_id'] = int(_o['_id'])
                     except:
-                        pass    
-        return o
-    
+                        pass
+                _i += 1
+            return _r
+
+        if isinstance(o, dict):
+            r = _convert([o])[0]
+        elif isinstance(o, list):
+            r = _convert(o)
+        return r
+
     def _response(self, data=None, rcode=None, message=None):
         r = {'data': []}
 
@@ -338,7 +361,7 @@ class MongoCRUD:
                 r['data'] = []
                 rcode = 500
                 message = 'Could not format data for response object ({}).'.format(type(data))
-        
+
         r['status'] = {'code': rcode, 'message': message, 'records': len(r['data'])}
         log.debug('response: {}'.format(r))
         return r
