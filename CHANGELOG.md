@@ -7,6 +7,12 @@
 ## auto_utils.py
 ---
 
+### 1.14
+- re-write email support (using smtplib)
+
+### 1.13
+### 1.12
+
 ### 1.11
 - add missing initialization to log.log_filename and made private (log._log_filename)
 
@@ -36,8 +42,15 @@
 ## auto_mongo.py
 ---
 
-[ ### 1.3 ]
+[ ### ?.?.? ]
 [ - add aggregation to MongoCRUD.read() ]
+
+### 1.3.0
+- bugfix with db_name when using db_config
+- fixed read1 with object_id decode.
+- optimized _encode_objectid()
+- issues with pymongo db/collection objects no longer "implement truth value testing or bool()"
+- change delete() positive confirmation return value to 200 (from 410)
 
 
 ### 1.2.3
@@ -94,4 +107,3 @@
 - optimize latest() --> ts_sorted_file()
 - add oldest()
 - add delete() --> delete_files()
-
