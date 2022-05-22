@@ -4,6 +4,7 @@
 from datetime import datetime, timedelta
 import importlib
 import multiprocessing
+from sys import argv
 import threading
 
 # -- pip-installed
@@ -12,7 +13,7 @@ from croniter import croniter
 # -- project-libs
 from auto_utils import config, log
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 default_timer = 60  # in second
 
@@ -80,7 +81,7 @@ def isexecutable(dt: datetime):
         st = now-timedelta(seconds=default_timer-1)
         if dt > st and dt <= now:
             r = True
-        log.debug(f"??? [{st}] > [{dt}] < [{now}]")
+        log.debug(f"? [{st}] > [{dt}] < [{now}]")
     except:
         pass
     return r
@@ -121,4 +122,15 @@ def wakeup() -> None:
 
 
 if __name__ == "__main__":
+    if '-n' in argv:
+        try:
+            default_timer = int(argv[argv.index('-n')+1])
+        except:
+            log.error(f"scheduler(): -n argument is missing a value. (default: {default_timer})")
+    if '--help' in argv:
+        print(
+            '\nUsage: ./scheduler.py [OPTION] \n'
+            '  -n        refresh rate interval in seconds\n'
+        )
+        exit()
     wakeup()
