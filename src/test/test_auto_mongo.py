@@ -10,6 +10,7 @@ object_ids = {}
 
 
 def test_connection():
+    dao.connector.connect()
     assert db.status()
     assert dao.connector.connected
     assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
@@ -17,17 +18,20 @@ def test_connection():
     assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
     dao.connector.close()
     assert not dao.connector.connected
+    assert not db.status()
+    db.connect()
+    assert dao.connector.connected
 
 
 def test_create():
     assert dao.create({'_id': 'randollrr', 'name': 'Randoll Revers', 'gender': 'M', 'age': None})
-    
+
     obj1 = dao.create([{'1': 2}, {'a': 'b, c'}])
     assert obj1['data']
-    
+
     obj2 = dao.create({'hello': [{'world': 1}, {'haiti': {'pv': 'access_ht'}}, {'me': 'and my...'}]})
     assert obj2['data']
-    
+
     # ref: https://docs.mongodb.com/v3.2/tutorial/query-documents/
     data = [{'_id': 1,
              'name': 'sue',
@@ -72,7 +76,7 @@ def test_read():
 # @pytest.mark.skip
 def test_projection():
     data = dao.read(
-        where={'_id': 1}, 
+        where={'_id': 1},
         collection='test',
         projection={'_id': False, 'name': True, 'type': True, 'status': True})['data'][0]
 
