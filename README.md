@@ -1,32 +1,56 @@
-# Utils
+# python-utils
 
-Utils is intended to be a swiss-army-knife toolbox that houses boilerplate codes for many apps or scripts. A generic API to access:
+Python-Utils is intended to be a swiss-army-knife toolbox that houses boilerplate codes for many apps or scripts. A generic set of libs to access the following: `(inspired by my home-automation services)`
 * databases,
 * config files,
 * logs,
 * email servers for notifications,
 * simple encryption, etc...
+<br/><br/>
 
+## Tools by lib:
 
-### Default parameters
-```yaml
-system:
-  app-name: cox-papa-wae-design-simulation
-directories:
-  app-log: /var/log
-logging:
-  log-level: INFO
+- [auto_utils](auto_utils.md): add support for log, config, etc...
+- [auto_mongo](auto_mongo.md): add basic MongoDB CRUD support to your script/app
+- [auto_fm](auto_fm.md): basic file management (file processing most common tasks)
+<br/><br/>
+
+### Default parameters:
+`config.json`
+```json
+{
+  "service": {
+    "app-name": "app",
+    "app-logs": "logs",
+    "log-level": "DEBUG",
+    "log-stdout": true,
+    "base-url": "/",
+    "security": null
+  }
+}
 ```
 
-### Optional (but implemented defaults)
+or
+
+`config.yaml`
 ```yaml
-database: (mysql or oracle)
-  host: my_server
-  user: root
-  password: my_password
-  schema: my_schema
+service:
+  app-name: app
+  app-log: /var/log
+  log-level: INFO
+  log-stdout: true
+```
+
+### Optional (when email notification is necessary)
+```yaml
 sendmail:
-  path: /usr/sbin/sendmail
-  from: no-reply@cox.com
-  stake_holders: Randoll.Revers@cox.com
+  server: mta.sendmail.com
+  port: null
+  default-from: noreply@memail.com
+  to:
+    - you1@memail.com
+    - you-two@example.com
+    - you.three@somewhere.com
+  subject: "sending emails"
+  body: "This is an email..."
 ```
