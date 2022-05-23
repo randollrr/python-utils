@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 import os
 
@@ -17,7 +17,7 @@ from auto_utils import config, log
 
 
 class MongoDB:
-    def __init__(self, db_config=None, collection=None, db=None, collection_obj=None, db_obj=None):
+    def __init__(self, db_config=None, collection=None, db=None, collection_obj=None, db_obj=None, db_client=None):
         """
         Create database connection.
 
@@ -29,7 +29,7 @@ class MongoDB:
         self.db = db_obj
         collection_name = collection; del collection  # -- to avoid ambiguity
         db_name = db; del db  # -- to avoid ambiguity
-        self.client = None
+        self.client = db_client if db_client else None
         self.connected = False
 
         # -- validate passing objects
@@ -55,12 +55,14 @@ class MongoDB:
                 self.environ = 'prod'
             log.info('Using mongo.{} configuration.'.format(self.environ))
         else:
-            log.info('Using db_config provided: {}'.format(db_config))
+            if db_config:
+                log.info('Using provided db_config: {}'.format(db_config))
 
         if db_config:
             db_name = db_config['database']
             self.client = MongoClient(
                 'mongodb://{}:{}/'.format(db_config['host'], db_config['port']),
+                connect=False,
                 username=db_config['username'],
                 password=db_config['password'],
                 authSource=db_config['authenticationDatabase'])
@@ -83,13 +85,11 @@ class MongoDB:
         elif collection_name and self.db is not None:
             self.collection = self.db[collection_name]
 
-        if self.status():
-            if collection_obj is not None and db_obj is not None:
-                log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.address))
-            else:
-                log.info('CONNECTED to {}@{}'.format(self.db.name, self.client.address))
+        if collection_obj is not None and db_obj is not None:
+            log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.address))
         else:
-            log.info('NOT CONNECTED.')
+            log.info('Connection object created for {}'.format(self.db.name))
+
 
     def close(self):
         if self.status():
@@ -102,9 +102,14 @@ class MongoDB:
         try:
             if self.client and self.client.server_info():
                 if isinstance(self.db.name, str):
-                    r = self.connected = True
+                    r = True
+            if r:
+                log.info('[CONNECTED] Using existing connection: {}@{}'.format(self.db.name, self.client.address))
+            else:
+                log.info('NOT CONNECTED.')
         except ServerSelectionTimeoutError:
-            pass
+            log.error('MongoDB.status(): Exception occured while using database object.')
+        self.connected = r
         return r
 
 
@@ -123,7 +128,7 @@ class MongoCRUD:
         :param collection: collection name to change
         :param db: database name to change (collecion is required)
         """
-        if collection and self.connector.connected:
+        if collection and self.connector.status():
             if db:
                 self.collection = self.connector.db.client[db][collection]
                 log.info('Using database: {}'.format(self.connector.db.name))
@@ -225,7 +230,7 @@ class MongoCRUD:
             log.info('read_count: {}'.format(doc_count))
 
         except Exception as e:
-            r = statement
+            # r = statement
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)

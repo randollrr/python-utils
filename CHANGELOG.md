@@ -45,6 +45,13 @@
 [ ### ?.?.? ]
 [ - add aggregation to MongoCRUD.read() ]
 
+
+### 1.3.1
+- 2nd update, keeping same version: bugfix with db_name when using db_config
+- added support MongoClient (db_client) connection spawning
+- modified connection creation got sub-process/thread forks
+
+
 ### 1.3.0
 - bugfix with db_name when using db_config
 - fixed read1 with object_id decode.
