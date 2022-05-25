@@ -370,7 +370,7 @@ class MongoCRUD:
                 rcode = 500
                 message = 'Could not format data for response object ({}).'.format(type(data))
 
-        r['status'] = {'code': rcode, 'message': message, 'records': len(r['data'])}
+        r['status'] = {'code': rcode, 'message': message, 'docs': len(r['data'])}
         log.debug('response: {}'.format(r))
         return r
 
