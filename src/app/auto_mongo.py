@@ -3,8 +3,9 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
+from copy import deepcopy
 import os
 
 from pymongo import MongoClient
@@ -150,15 +151,16 @@ class MongoCRUD:
         c = 204
         m = 'Nothing happened.'
 
+        data = deepcopy(doc)
         try:
             ins = None
-            doc = self._encode_objectid(doc)
-            if isinstance(doc, dict):
-                ins = self.collection.insert_one(doc)
+            data = self._encode_objectid(data)
+            if isinstance(data, dict):
+                ins = self.collection.insert_one(data)
                 r = self._decode_objectid(ins.inserted_id)
                 count = 1 if r else 0
-            elif isinstance(doc, list):
-                ins = self.collection.insert_many(doc)
+            elif isinstance(data, list):
+                ins = self.collection.insert_many(data)
                 r = ins.inserted_ids
                 count = len(r)
             if r and ins:
@@ -251,22 +253,23 @@ class MongoCRUD:
         :param like: use filter with $regex i.e. like={'employe_name': '^Ran'}
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
         """
-        log.debug('update: {}'.format(doc))
+        log.debug('update: {}'.format(data))
         self.cd(collection, db)
         r = []
         c = 204
         m = 'Nothing happened.'
 
+        data = deepcopy(doc)
         try:
-            if isinstance(doc, dict):
-                doc = self._encode_objectid(doc)
-                obj = self.collection.replace_one({'_id': doc['_id']}, doc)
+            if isinstance(data, dict):
+                data = self._encode_objectid(data)
+                obj = self.collection.replace_one({'_id': data['_id']}, data)
                 log.info('update_match_count: {}, update_mod: {}, update_ack: {}'.format(
                     obj.matched_count, obj.modified_count, obj.acknowledged))
                 c = 200
                 m = 'Document(s) updated.'
         except Exception as e:
-            r = doc
+            r = data
             c = 500
             m = 'Server Error: {}'.format(e)
         return self._response(r, c, m)
@@ -354,7 +357,7 @@ class MongoCRUD:
         return r
 
     def _response(self, data=None, rcode=None, message=None):
-        r = {'data': []}
+        r = {'status': {'code': None, 'message': None}, 'data': []}
 
         if data:
             if type(data) in [int, str, dict]:
