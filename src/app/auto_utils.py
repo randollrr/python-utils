@@ -148,7 +148,7 @@ class Log:
             self.set_logger()
         self.logger.error(msg)
 
-    def filename(self):
+    def logfn(self):
         return self._log_filename
 
     def gethandler(self):
@@ -165,8 +165,8 @@ class Log:
         self.logger.info(msg)
 
     def reset(self):
-        if self.filename():
-            with open(self.filename(), 'w'):
+        if self.logfn():
+            with open(self.logfn(), 'w'):
                 pass
 
     def set_logger(self, svcname=None):
