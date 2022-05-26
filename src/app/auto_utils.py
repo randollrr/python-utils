@@ -1,14 +1,11 @@
 """
 Utils is intended to be a swiss-army-knife toolbox that houses boilerplate codes
-for many apps or scripts. A generic API to access:
+for many apps or scripts. A generic lib to access:
 * config files,
 * logs,
 * email servers for notifications,
 * [and maybe simple encryption, etc...]
-
 """
-__authors__ = ['randollrr', 'msmith8']
-__version__ = '1.13'
 
 import json
 import logging
@@ -16,24 +13,23 @@ import os
 import warnings
 from logging.handlers import RotatingFileHandler
 
-yaml = None
+
 try:
     import yaml  # 5.1.1+
 except ImportError:
-    pass
+    yaml = None
+
+
+__authors__ = ['randollrr', 'msmith8']
+__version__ = '1.15'
 
 
 def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emmitted
-    when the function is used."""
     def new_func(*args, **kwargs):
         warnings.warn("Call to deprecated function {0}.".format(func.__name__),
                       category=DeprecationWarning)
         return func(*args, **kwargs)
     new_func.__name__ = func.__name__
-    new_func.__doc__ = func.__doc__
-    new_func.__dict__.update(func.__dict__)
     return new_func
 
 
@@ -64,7 +60,7 @@ class Config:
         Check file type: json or yaml
         """
         ft = 'json'
-        
+
         t = self.file.split('.')[len(self.file.split('.'))-1]
         if t == 'yaml' or t == 'yml':
             ft = 'yaml'
@@ -74,6 +70,9 @@ class Config:
         r = {}
         try:
             r = self.params[item]
+            if isinstance(r, dict):
+                for k, v in r.items():
+                    r[k] = envar_in(v)
         except Exception:
             pass
         return r
@@ -92,12 +91,9 @@ class Config:
     def __setitem__(self, key, value):
         self.params[key] = value
 
+    @deprecated
     def save(self):
-        with open(self.file, 'w') as f:
-            if yaml and self.file_type() == 'yaml':
-                 yaml.dump(self.params, f)
-            else:
-                json.dump(self.params, f, indent=4)
+        self.write()
 
     def set(self, fp):
         self.file = fp
@@ -108,6 +104,13 @@ class Config:
 
     def status(self):
         return self._state
+
+    def write(self):
+        with open(self.file, 'w') as f:
+            if yaml and self.file_type() == 'yaml':
+                 yaml.dump(self.params, f)
+            else:
+                json.dump(self.params, f, indent=4)
 
 
 class Log:
@@ -210,25 +213,39 @@ class Log:
 
 
 class Email:
-    """A simple client to send email via a local sendmail instance
     """
-    def __init__(self):
-        global config
-        config = Config()
-        self.SENDMAIL = config['service']['sendmail']
-        self.from_addr = self.SENDMAIL['from']
-        self.to_addresses = self.SENDMAIL['to']
+    ToDo: redesign/re-implement
+    """
 
-    def send_email(self, subject, body):
-        p = os.popen('/usr/sbin/sendmail -t', 'w')
-        p.write('To: {}\n'.format(self.to_addresses))
-        p.write('Subject: {}\n'.format(subject))
-        p.write('From: {}\n'.format(self.from_addr))
-        p.write('\n')  # blank line separating headers from body
-        p.write(body)
-        sts = p.close()
-        if sts != 0:
-            log.info('Sendmail exit status: {}'.format(sts))
+    def __init__(self, from_addr=None, to_addr=None, subject=None, body=None):
+        self.from_addr = None
+        self.to_addr = None
+
+    def attach(self):
+        ...
+
+    def create_message(self):
+        ...
+
+    def send(self, message):
+        ...
+
+    def set_mime(self, msg_body, mimetype='html'):
+        ...
+
+
+def envar_in(txt):
+    r = txt
+    if isinstance(txt, str) and '((env:' in txt and '))' in txt:
+        txt = txt.replace(' ', '')
+        s = txt.index('((env:')
+        e = txt.index('))')
+        v = txt[s:e+2]
+        t = os.environ.get(v.replace('((env:', '').replace('))', ''))
+        if t:
+            r = txt.replace(v, t)
+            del s, e, v, t, txt
+    return r
 
 
 def wd():
