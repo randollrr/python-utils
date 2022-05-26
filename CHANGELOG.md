@@ -7,6 +7,9 @@
 ## auto_utils.py
 ---
 
+### 1.15
+- remove support for email (REST-based service will be used instead)
+
 ### 1.14
 - re-write email support (using smtplib)
 
