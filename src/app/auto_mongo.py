@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 from copy import deepcopy
 import os
@@ -140,7 +140,7 @@ class MongoCRUD:
 
     def create(self, doc=None, collection=None, db=None):
         """
-        Insert object(s).
+        Insert objects.
         :param doc: data to be inserted.
         :param collection: to change collection/table
         :param db: to change database
@@ -169,7 +169,7 @@ class MongoCRUD:
                 log.info('create_count: {}, create_ack: {}'.format(count, ins.acknowledged))
         except Exception as e:
             c = 500
-            m = 'Server Error: {}'.format(e)
+            m = 'create(): Server Error: {}'.format(e)
         return self._response(r, c, m)
 
     def read(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
@@ -208,7 +208,7 @@ class MongoCRUD:
             #     else:
             #         pass  # count
 
-            log.info('retrieving doc(s) like: {}{}'.format(dict(statement), \
+            log.info('read(): retrieving docs like: {}{}'.format(dict(statement), \
                 ', {}'.format(projection) if projection else ''))
 
             # -- execute statement
@@ -234,7 +234,7 @@ class MongoCRUD:
         except Exception as e:
             # r = statement
             c = 500
-            m = 'Server Error: {}'.format(e)
+            m = 'read(): Server Error: {}'.format(e)
         return self._response(r, c, m)
 
     def read1(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
@@ -267,11 +267,11 @@ class MongoCRUD:
                 log.info('update_match_count: {}, update_mod: {}, update_ack: {}'.format(
                     obj.matched_count, obj.modified_count, obj.acknowledged))
                 c = 200
-                m = 'Document(s) updated.'
+                m = 'Documents updated.'
         except Exception as e:
             r = data
             c = 500
-            m = 'Server Error: {}'.format(e)
+            m = 'update(): Server Error: {}'.format(e)
         return self._response(r, c, m)
 
     def delete(self, where=None, collection=None, db=None):
@@ -292,7 +292,7 @@ class MongoCRUD:
         c = 204
         m = 'Nothing happened.'
 
-        log.debug('delete doc(s) like: {}'.format(where))
+        log.debug('delete docs like: {}'.format(where))
         try:
             if where:
                 if isinstance(where, dict):
@@ -312,11 +312,11 @@ class MongoCRUD:
                         log.info('delete_count: {}, delete_ack: {}'.format(obj.deleted_count, obj.acknowledged))
                         r += [{'statement': self._decode_objectid(s), 'delete_count': obj.deleted_count, 'delete_ack':obj.acknowledged}]
                 c = 200
-                m = 'Item(s) deletion have been executed.'
+                m = 'Items deletion have been executed.'
         except Exception as e:
             r = where
             c = 500
-            m = 'Server Error: {}'.format(e)
+            m = 'delete(): Server Error: {}'.format(e)
         return self._response(r, c, m)
 
 
@@ -334,7 +334,7 @@ class MongoCRUD:
         return r
 
     def _encode_objectid(self, o):
-        r = o.copy()
+        r = deepcopy(o)
 
         def _convert(_objects):
             _i = 0
