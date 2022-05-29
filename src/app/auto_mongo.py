@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 from copy import deepcopy
 import os
@@ -140,7 +140,7 @@ class MongoCRUD:
 
     def create(self, doc=None, collection=None, db=None):
         """
-        Insert object(s).
+        Insert objects.
         :param doc: data to be inserted.
         :param collection: to change collection/table
         :param db: to change database
@@ -267,7 +267,7 @@ class MongoCRUD:
                 log.info('update_match_count: {}, update_mod: {}, update_ack: {}'.format(
                     obj.matched_count, obj.modified_count, obj.acknowledged))
                 c = 200
-                m = 'Document(s) updated.'
+                m = 'Documents updated.'
         except Exception as e:
             r = data
             c = 500
@@ -312,7 +312,7 @@ class MongoCRUD:
                         log.info('delete_count: {}, delete_ack: {}'.format(obj.deleted_count, obj.acknowledged))
                         r += [{'statement': self._decode_objectid(s), 'delete_count': obj.deleted_count, 'delete_ack':obj.acknowledged}]
                 c = 200
-                m = 'Item(s) deletion have been executed.'
+                m = 'Items deletion have been executed.'
         except Exception as e:
             r = where
             c = 500
