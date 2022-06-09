@@ -1,4 +1,5 @@
 # environment
+.coverage
 .dart_tool/
 # .devcontainer/
 .env
@@ -26,5 +27,8 @@ build.properties
 target/
 
 # exceptions
+!.keep
+
+# unlisted
 auto_mysql.py
 auto_emails.py
