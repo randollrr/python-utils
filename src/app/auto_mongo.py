@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.3'
+__version__ = '1.3.4'
 
 from copy import deepcopy
 import os
@@ -145,6 +145,7 @@ class MongoCRUD:
         :param collection: to change collection/table
         :param db: to change database
         """
+        log.debug('create: {}'.format(doc))
         self.cd(collection, db)
         count = 0
         r = None
@@ -253,7 +254,7 @@ class MongoCRUD:
         :param like: use filter with $regex i.e. like={'employe_name': '^Ran'}
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
         """
-        log.debug('update: {}'.format(data))
+        log.debug('update: {}'.format(doc))
         self.cd(collection, db)
         r = []
         c = 204
