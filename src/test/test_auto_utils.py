@@ -9,7 +9,7 @@ def test_config_file_type():
 
 @pytest.mark.parametrize('i, o',[
     ('keys', 'a1b2c3-d4e5f6-g7h8k9-l0m1n2'),
-    ('secret', 'hdDrA1D#me2fr!3$hW'),
+    # ('secret', 'hdDrA1D#me2fr!3$hW'),
     ('user', 'itsme@email.com')
 ])
 def test_config_get(i, o):
@@ -54,4 +54,3 @@ def test_envar_in(i, o):
 #         from_addr='',
 #         to_addr='')
 #     assert True
-
