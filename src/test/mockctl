@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import json
+from sys import argv
+
+from auto_mongo import dao
+from auto_utils import 
+
+
+def run(cli=None):
+    m = ''
+    if cli and cli == 'mk':
+        print('\nCreating mock data...\n')
+        with open('src/test/mockdata.json', 'r') as f:
+            data = json.load(f)
+        if not dao.read1({"tableName": "PTEST1"}, "peering_pmsheet"):
+            dao.create(data['pm'], 'peering_pmsheet')
+            m = 'pm created.'
+        if not dao.read1({"tableName": "PP:TEST:0001"}, "peering_assetsheet"):
+            dao.create(data['ppp'], 'peering_assetsheet')
+            m += ' ppp created.'
+    elif cli and cli == 'rm':
+        print('\nRemoving mock data...\n')
+        if dao.delete(dao.read1({"tableName": "PTEST1"}, "peering_pmsheet"))['data']:
+            m = 'pm deleted.'
+        if dao.delete(dao.read1({"tableName": "PP:TEST:0001"}, "peering_assetsheet"))['data']:
+            m += ' ppp deleted.'
+        if dao.delete(dao.read({"tableName": {"$regex": "TEST"}},
+            "peering_decommsheet")['data'])['data']:
+            m += ' decomm deleted.'
+    else:
+        usage()
+    if m == '':
+        m = 'nothing happened.'
+    print(f'\nDone [{m}]\n')
+
+
+def usage():
+    print('\nWhat would you like to do?')
+    print('  mockctl create')
+    print('  mockctl remove\n')
+
+
+if __name__ == '__main__':
+    if len(argv) >= 1:
+        remove = None
+        if 'remove' in argv:
+            run('rm')
+        elif 'create' in argv:
+            run('mk')
+        else:
+            usage()
