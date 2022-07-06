@@ -56,7 +56,8 @@ def test_envar_in(i, o):
 #     assert True
 
 def test_status():
-    status = Status()
+    status = Status(404, 'No data found.')
+    print(status)
     status.code = 200
     status.message = 'OK'
     status.docs = 31
