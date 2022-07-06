@@ -237,16 +237,47 @@ class Email:
 
 @dataclass
 class Status:
+    """
+    Status codes for APIs
+
+    (default doc) This API is designed to return different status codes:
+
+    * 200 (OK, done)[POST, GET, PUT, DELETE]:
+        The request was successful, the resource(s) itself is returned as
+        JSON by default
+
+    * 204 (nothing happened)[POST, PUT, DELETE]:
+        Requested action was not understood or recognized
+
+    * 400 (bad request, missing values, required fields are missing, missing
+        permission/authentication)[POST, GET, PUT, DELETE]:
+
+    * 404 (requested items not found, data not found)[GET]:
+        A resource could not be accessed (e.g. a check ID could not be found)
+
+    * 500 (service error, handled exception occurred)[POST, GET, PUT, DELETE]:
+        Something went wrong on the server side (e.g. a check could not be saved
+        in database)
+    """
     code = 0
     message = None
 
     def __repr__(self):
+        """
+        Returns printable string representation of this object.
+        """
         return json.dumps(self.__dict__)
 
     def to_dict(self):
+        """
+        Returns dict representation of this object.
+        """
         return self.__dict__
 
     def to_str(self):
+        """
+        Returns string representation of this object.
+        """
         return self.__repr__()
 
 
