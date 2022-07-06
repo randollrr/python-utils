@@ -240,7 +240,7 @@ class Status:
     """
     Status codes for APIs
 
-    (default doc) This API is designed to return different status codes:
+    [default text] This API is designed to return different status codes:
 
     * 200 (OK, done)[POST, GET, PUT, DELETE]:
         The request was successful, the resource(s) itself is returned as
@@ -262,19 +262,23 @@ class Status:
     code = 0
     message = None
 
-    def __repr__(self):
+    def __init__(self, code, message) -> None:
+        self.__dict__['code'] = code
+        self.__dict__['message'] = message
+
+    def __repr__(self) -> str:
         """
         Returns printable string representation of this object.
         """
         return json.dumps(self.__dict__)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Returns dict representation of this object.
         """
         return self.__dict__
 
-    def to_str(self):
+    def to_str(self) -> str:
         """
         Returns string representation of this object.
         """
