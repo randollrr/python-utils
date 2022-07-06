@@ -1,6 +1,6 @@
 
 import pytest
-from auto_utils import config, envar_in, Email, log
+from auto_utils import config, envar_in, Email, log, Status
 
 
 def test_config_file_type():
@@ -54,3 +54,14 @@ def test_envar_in(i, o):
 #         from_addr='',
 #         to_addr='')
 #     assert True
+
+def test_status():
+    status = Status()
+    status.code = 200
+    status.message = 'OK'
+    status.docs = 31
+    assert isinstance(status, Status)
+    assert isinstance(str(status), str)
+    assert isinstance(status.to_str(), str)
+    assert isinstance(status.to_dict(), dict) and len(status.to_dict()) == 3
+    print(status)

@@ -7,6 +7,7 @@ for many apps or scripts. A generic lib to access:
 * [and maybe simple encryption, etc...]
 """
 
+from dataclasses import dataclass
 import json
 import logging
 import os
@@ -21,7 +22,7 @@ except ImportError:
 
 
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.15'
+__version__ = '1.16'
 
 
 def deprecated(func):
@@ -232,6 +233,21 @@ class Email:
 
     def set_mime(self, msg_body, mimetype='html'):
         ...
+
+
+@dataclass
+class Status:
+    code = 0
+    message = None
+
+    def __repr__(self):
+        return json.dumps(self.__dict__)
+
+    def to_dict(self):
+        return self.__dict__
+
+    def to_str(self):
+        return self.__repr__()
 
 
 def envar_in(txt):
