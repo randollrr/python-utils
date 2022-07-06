@@ -60,6 +60,7 @@ def test_status():
     status.code = 200
     status.message = 'OK'
     status.docs = 31
+    assert isinstance(status, Status)
     assert isinstance(str(status), str)
     assert isinstance(status.to_str(), str)
     assert isinstance(status.to_dict(), dict) and len(status.to_dict()) == 3
