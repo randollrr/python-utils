@@ -7,30 +7,42 @@
 ## auto_utils.py
 ---
 
+### 1.16
+- add status object
+
+
 ### 1.15
 - remove support for email (REST-based service will be used instead)
+
 
 ### 1.14
 - re-write email support (using smtplib)
 
+
 ### 1.13
 ### 1.12
 
+
 ### 1.11
 - add missing initialization to log.log_filename and made private (log._log_filename)
+
 
 ### 1.10
 - show logging on screen only
 - improve log.gethandler()
 
+
 ### 1.9
 - add log.reset()
+
 
 ### 1.8
 - add support to not save but display a log is ok
 
+
 ### 1.7
 - remove all python 3.7 string formating
+
 
 ### 1.6
 - optimize Config(), make it more flexible to read, write yaml/json file
