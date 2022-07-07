@@ -259,7 +259,7 @@ class Status:
         Something went wrong on the server side (e.g. a check could not be saved
         in database)
     """
-    code = 0
+    code = None
     message = None
 
     def __init__(self, code, message) -> None:
