@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from sys import argv
 from getpass import getpass
@@ -112,7 +112,7 @@ class Authentication:
     def usage(self):
         log.info(
             'usage...\n\n'
-            'auto_ums.py -u <username> -p [password]\n'
+            'ums4tests.py -u <username> -p [password]\n'
             '    -u username\n'
             '    -p password or leave blank for prompt\n\n'
             '(note: if switches are mising, environment variable will be used.)\n')
