@@ -173,7 +173,8 @@ class MongoCRUD:
             m = 'create(): Server Error: {}'.format(e)
         return self._response(r, c, m)
 
-    def read(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
+    def read(self, where=None, collection=None, db=None, projection=None,
+        sort=None, aggr_cols=None, aggr_type=None, like=None):
         """
         Read <database>.<collection>.
         :param where: filter object to look for
