@@ -1,6 +1,6 @@
 
 import pytest
-from auto_utils import config, envar_in, Email, log, Status
+from auto_utils import config, envar_in, Email, log, Status, next_add
 
 
 def test_config_file_type():
@@ -55,6 +55,7 @@ def test_envar_in(i, o):
 #         to_addr='')
 #     assert True
 
+
 def test_status():
     status = Status(404, 'No data found.')
     print(status)
@@ -66,3 +67,15 @@ def test_status():
     assert isinstance(status.to_str(), str)
     assert isinstance(status.to_dict(), dict) and len(status.to_dict()) == 3
     print(status)
+
+
+@pytest.mark.parametrize('text, ret', [
+    (None, None),
+    ('abc0', 'abc1'),
+    ('randoll-123', 'randoll-124'),
+    ('23423abc', '23423abc'),
+    ('abc12xyz03', 'abc12xyz04'),
+])
+def test_route_next_add(text, ret):
+    res = next_add(text)
+    assert res == ret

@@ -22,7 +22,7 @@ except ImportError:
 
 
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.16'
+__version__ = '1.17'
 
 
 def deprecated(func):
@@ -296,6 +296,26 @@ def envar_in(txt):
         if t:
             r = txt.replace(v, t)
             del s, e, v, t, txt
+    return r
+
+
+def next_add(text):
+    r = None
+
+    def digits(_t):
+        _r = None
+        if isinstance(_t, str):
+            _cnt = 0
+            for _c in ''.join(reversed(_t)):
+                if _c.isdigit():
+                    _cnt += 1
+                else: break
+            _r = _cnt
+        return _r
+
+    n = digits(text)
+    r = f"{text[:-n]}{str(int(text[-n:])+1).zfill(n)}" if n else text
+
     return r
 
 
