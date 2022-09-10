@@ -22,7 +22,7 @@ except ImportError:
 __authors__ = ['randollrr', 'msmith8']
 __version__ = '1.18'
 
-_g = {}
+g = {}
 
 
 def deprecated(func):
@@ -321,21 +321,21 @@ def next_add(text):
 
 def rwjson(action, fn) -> None:
     # -- override default parameters
-    if not _g.get('_rwpath'):
-        _g['_rwpath'] = wd()
-    if not _g.get('_rwfn'):
-        _g['_rwfn'] = f"_{fn}.json"
+    if not g.get('_rwpath'):
+        g['_rwpath'] = wd()
+    if not g.get('_rwfn'):
+        g['_rwfn'] = f"_{fn}.json"
     # -- known behaviors
     if action == 'read':
         try:
-            _g.setdefault(fn, None)
-            with open(f"{_g['_rwpath']}/{_g['_rwfn']}", 'r') as f:
-                _g[fn] = json.load(f)
+            g.setdefault(fn, None)
+            with open(f"{g['_rwpath']}/{g['_rwfn']}", 'r') as f:
+                g[fn] = json.load(f)
         except:
             pass
     if action == 'write':
-        with open(f"{_g['_rwpath']}/{_g['_rwfn']}", 'w') as f:
-            json.dump(_g[fn], f)
+        with open(f"{g['_rwpath']}/{g['_rwfn']}", 'w') as f:
+            json.dump(g[fn], f)
     return
 
 
