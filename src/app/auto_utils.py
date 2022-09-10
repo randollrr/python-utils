@@ -6,23 +6,23 @@ for many apps or scripts. A generic lib to access:
 * email servers for notifications,
 * [and maybe simple encryption, etc...]
 """
-
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 import logging
 import os
 import warnings
 from logging.handlers import RotatingFileHandler
 
-
 try:
     import yaml  # 5.1.1+
 except ImportError:
     yaml = None
 
-
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.17'
+__version__ = '1.18'
+
+_g = {}
 
 
 def deprecated(func):
@@ -316,6 +316,37 @@ def next_add(text):
     n = digits(text)
     r = f"{text[:-n]}{str(int(text[-n:])+1).zfill(n)}" if n else text
 
+    return r
+
+
+def rwjson(action, fn) -> None:
+    # -- override default parameters
+    if not _g.get('_rwpath'):
+        _g['_rwpath'] = wd()
+    if not _g.get('_rwfn'):
+        _g['_rwfn'] = f"_{fn}.json"
+    # -- known behaviors
+    if action == 'read':
+        try:
+            _g.setdefault(fn, None)
+            with open(f"{_g['_rwpath']}/{_g['_rwfn']}", 'r') as f:
+                _g[fn] = json.load(f)
+        except:
+            pass
+    if action == 'write':
+        with open(f"{_g['_rwpath']}/{_g['_rwfn']}", 'w') as f:
+            json.dump(_g[fn], f)
+    return
+
+
+def ts(kind=None):
+    dt = datetime.now(timezone.utc)
+    if not kind:
+        r = datetime.strftime(dt, '%Y-%m-%dT%H:%M:%SZ')
+    elif kind == 'date':
+        r = datetime.strftime(dt, '%Y-%m-%d')
+    elif kind == 'object':
+        r = dt
     return r
 
 
