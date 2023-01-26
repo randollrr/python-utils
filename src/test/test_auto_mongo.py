@@ -9,20 +9,6 @@ log.reset()
 object_ids = {}
 
 
-def test_connection():
-    dao.connector.connect()
-    assert db.status()
-    assert dao.connector.connected
-    assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
-    assert MongoDB(db_obj=dao.connector.db).status()
-    assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
-    dao.connector.close()
-    assert not dao.connector.connected
-    assert not db.status()
-    db.connect()
-    assert dao.connector.connected
-
-
 def test_create():
     assert dao.create({'_id': 'randollrr', 'name': 'Randoll Revers', 'gender': 'M', 'age': None})
 
@@ -96,7 +82,21 @@ def test_update():
         dao.update(d)
 
 
-# @pytest.mark.skip
+def test_update_with_sync_id():
+    dao.create({'vendor': 'my-company'}, 'test')
+    data = dao.read1({'vendor': 'my-company'}, 'test')
+    assert dao.update(data, with_sync_id=True)['status']['code'] == 200
+    data['_sync_id'] = '8bd9cf50-acc8-42e8-8736-13102e54efa4'  # some previous value
+    assert dao.update(data, with_sync_id=True)['status']['code'] == 204
+    data['_sync_id'] = ''
+    assert dao.update(data, with_sync_id=True)['status']['code'] == 204
+    del data['_sync_id']
+    assert dao.update(data, with_sync_id=True)['status']['code'] == 204
+    data = dao.read1({'vendor': 'my-company'}, 'test')
+    data['updated_dt'] = 'today-is-the-day'
+    assert dao.update(data, with_sync_id=True)['status']['code'] == 200
+
+
 def test_delete():
     assert dao.delete({})['status']['code'] == 204
     if object_ids.get('delete_list'):
@@ -106,6 +106,22 @@ def test_delete():
 
 # @pytest.fixture
 # def test_teardown(dbms):
+def test_teardown_test():
     # dbo = dbms['db']
     # dbo.drop_collection('test')
     # dbo.client.drop_database('test_db')
+    dao.delete(dao.read({}, 'test')['data'], 'test')
+
+
+def test_connection():
+    dao.connector.status()
+    assert db.status()
+    assert dao.connector.connected
+    assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
+    assert MongoDB(db_obj=dao.connector.db).status()
+    assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
+    dao.connector.close()
+    assert not dao.connector.connected
+    # assert not db.status()  # can no longer use db after closing connection
+    # db.connect()            # as of MongoDB 4.2.2+
+    # assert dao.connector.connected
