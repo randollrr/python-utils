@@ -1,13 +1,34 @@
 # environment
+.coverage
+.dart_tool/
+# .devcontainer/
+.env
 env/
-__pycache__/
-.pytest_cache/
-*.pyc
-venv/
-
-
-# IDE
 .idea/
 .project
+.pytest_cache/
+__pycache__/
 .settings/
+tmp/
+venv/
 .vscode/
+
+# extensions
+*.log
+*.pyc
+
+# project
+*.csv*
+*.tar
+*.tar.gz
+build/
+build.sbt
+build.properties
+target/
+
+# exceptions
+!.keep
+
+# unlisted
+auto_mysql.py
+auto_emails.py
