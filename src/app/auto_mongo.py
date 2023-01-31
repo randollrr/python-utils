@@ -3,10 +3,11 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.4'
+__version__ = '1.3.5'
 
 from copy import deepcopy
 import os
+from uuid import uuid4
 
 from pymongo import MongoClient
 from pymongo.cursor import Cursor
@@ -173,8 +174,7 @@ class MongoCRUD:
             m = 'create(): Server Error: {}'.format(e)
         return self._response(r, c, m)
 
-    def read(self, where=None, collection=None, db=None, projection=None,
-        sort=None, aggr_cols=None, aggr_type=None, like=None):
+    def read(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
         """
         Read <database>.<collection>.
         :param where: filter object to look for
@@ -246,7 +246,7 @@ class MongoCRUD:
             r = self._decode_objectid(data[0])
         return r
 
-    def update(self, doc=None, collection=None, db=None, where=None, like=None, set=None):
+    def update(self, doc=None, collection=None, db=None, where=None, like=None, set=None, with_sync_id=False):
         """
         :param doc: new version of database object to update
         :param collection: to change collection/table
@@ -254,6 +254,7 @@ class MongoCRUD:
         :param where: criteria to locate database object i.e {'city': 'Atlanta}
         :param like: use filter with $regex i.e. like={'employe_name': '^Ran'}
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
+        :param with_sync_id: set True to enforce the right user is updating the right version of doc (credit: T. J. Killian)
         """
         log.debug('update: {}'.format(doc))
         self.cd(collection, db)
@@ -261,15 +262,30 @@ class MongoCRUD:
         c = 204
         m = 'Nothing happened.'
 
+        verifier = None
         data = deepcopy(doc)
         try:
             if isinstance(data, dict):
                 data = self._encode_objectid(data)
-                obj = self.collection.replace_one({'_id': data['_id']}, data)
-                log.info('update_match_count: {}, update_mod: {}, update_ack: {}'.format(
-                    obj.matched_count, obj.modified_count, obj.acknowledged))
-                c = 200
-                m = 'Documents updated.'
+                if with_sync_id:
+                    verifier = self.read1({'_id': data['_id'],
+                        '_sync_id': data.get('_sync_id') or {'$exists': False}}, collection)
+                    if verifier:
+                        data['_sync_id'] = self._get_sync_id()
+                        res = self.collection.replace_one({'_id': data['_id']}, data)
+                        c = 200
+                        m = 'Documents updated. ({})'.format(data['_sync_id'])
+                    else:
+                        m += ' Document has wrong _sync_id.'
+                        return self._response(r, c, m)
+                else:
+                    res = self.collection.replace_one({'_id': data['_id']}, data)
+                    if res.modified_count:
+                        c = 200
+                        m = 'Documents updated.'
+                    log.info(
+                        'update_match_count: {}, update_mod: {}, update_ack: {}'.format(
+                            res.matched_count, res.modified_count, res.acknowledged))
         except Exception as e:
             r = data
             c = 500
@@ -357,6 +373,9 @@ class MongoCRUD:
         elif isinstance(o, list):
             r = _convert(o)
         return r
+
+    def _get_sync_id(self):
+        return str(uuid4())
 
     def _response(self, data=None, rcode=None, message=None):
         r = {'status': {'code': None, 'message': None}, 'data': []}
