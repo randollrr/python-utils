@@ -273,8 +273,11 @@ class MongoCRUD:
                     if verifier:
                         data['_sync_id'] = self._get_sync_id()
                         res = self.collection.replace_one({'_id': data['_id']}, data)
-                        c = 200
-                        m = 'Documents updated. ({})'.format(data['_sync_id'])
+                        if res.modified_count:
+                            c = 200
+                            m = 'Documents updated. ({})'.format(data['_sync_id'])
+                        else:
+                            m = 'Document was found but not modified.'
                     else:
                         m += ' Document has wrong _sync_id.'
                         return self._response(r, c, m)
@@ -283,6 +286,9 @@ class MongoCRUD:
                     if res.modified_count:
                         c = 200
                         m = 'Documents updated.'
+                    else:
+                        m = 'Document was found but not modified.'
+
                     log.info(
                         'update_match_count: {}, update_mod: {}, update_ack: {}'.format(
                             res.matched_count, res.modified_count, res.acknowledged))
