@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.6'
+__version__ = '1.3.7'
 
 from copy import deepcopy
 import os
@@ -276,6 +276,7 @@ class MongoCRUD:
                         if res.modified_count:
                             c = 200
                             m = 'Documents updated. ({})'.format(data['_sync_id'])
+                            r += [{'_sync_id': data['_sync_id']}]
                         else:
                             m = 'Document was found but not modified.'
                     else:
