@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.7'
+__version__ = '1.3.8'
 
 from copy import deepcopy
 import os
@@ -47,13 +47,13 @@ class MongoDB:
         # -- database basic config
         if db_config is None and self.db is None and self.collection is None:
             if os.environ.get('APP_RUNTIME_CONTEXT') == 'dev':
-                db_config = config['mongo.dev']
+                db_config = config['mongo.dev'] if config['mongo.dev'] else config['mongodb']
                 self.environ = 'dev'
             elif os.environ.get('APP_RUNTIME_CONTEXT') == 'qa':
-                db_config = config['mongo.qa']
+                db_config = config['mongo.qa'] if config['mongo.qa'] else config['mongodb']
                 self.environ = 'qa'
             else:
-                db_config = config['mongo.prod']
+                db_config = config['mongo.prod']  if config['mongo.prod'] else config['mongodb']
                 self.environ = 'prod'
             log.info('Using mongo.{} configuration.'.format(self.environ))
         else:
