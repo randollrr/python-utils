@@ -7,20 +7,24 @@ from elasticsearch_dsl import Search
 
 class ElasticConnection:
     def __init__(self) -> None:
+        self.client = None
         self.timeout = 120
-        self.host = config['elastic']['url']
-        self.client = Elasticsearch(
-            hosts=[f'https://{self.host}:9243'],
-            http_auth=(config['elastic']['username'], config['elastic']['password']),
-            ssl_show_warn=False,
-            request_timeout=self.timeout, max_retries=10, retry_on_timeout=True)
-        # log.debug(self.client.cluster.health(request_timeout=self.timeout))
+        if config['elastic']:
+            self.host = config['elastic']['url']
+            self.client = Elasticsearch(
+                hosts=[f'https://{self.host}:9243'],
+                http_auth=(config['elastic']['username'], config['elastic']['password']),
+                ssl_show_warn=False,
+                request_timeout=self.timeout, max_retries=10, retry_on_timeout=True)
+            # log.debug(self.client.cluster.health(request_timeout=self.timeout))
 
 
 class ElasticCRUD(ElasticConnection):
     def __init__(self, index=None) -> None:
         super().__init__()
-        self.index = config['elastic']['index'] if not index else index
+        self.index = None
+        if config['elastic']:
+            self.index = config['elastic']['index'] if not index else index
         self.s = Search(using=self.client)
 
     def create(self):
