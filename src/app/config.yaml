@@ -1,9 +1,31 @@
+external-api:
+  base-url: https://api.somewhere.com
+  keys: ((env:API_KEYS))
+  secret: ((env:API_SECRET))
+  user: itsme@email.com
+mongo.dev:
+  authenticationDatabase: ''
+  collection: test
+  database: test_db
+  host: localhost
+  password: null
+  port: 27017
+  username: null
+mongo.prod:
+  authenticationDatabase: prod_db
+  database: prod_db
+  host: db.host.domain
+  password: password
+  port: 27017
+  username: username
+sendmail:
+  default-from: me@email.com
+  port: null
+  reply-to: null
+  server: restful.email.com
+  to: you@email.com
 service:
+  app-logs: null
   app-name: app
-  app-logs: /var/log
   log-level: DEBUG
   log-stdout: true
-# sendmail:
-#   path: /usr/sbin/sendmail
-#   from: no-reply@example.com
-#   to: randollrr@example.com

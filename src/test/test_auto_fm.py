@@ -6,9 +6,8 @@ from auto_utils import log, wd
 
 @pytest.fixture
 def _g():
-    fm = FileManager()
     yield {
-        'fm': fm,
+        'fm': FileManager(),
         'pwd': 'dirstruct'
     }
 
@@ -18,8 +17,10 @@ def test_dir_struct(_g):
     pwd = _g['pwd']
 
     # -- default path and directories
-    fm.dir_struct()
-    dir_list = [x[1] for x in fm.ls(f"./fm")]
+    fm.dir_struct(pwd)
+    # dir_list = [x[1] for x in fm.ls(f"./fm")]
+    dirs = fm.ls()
+    dir_list = [x[1] for x in dirs]
     assert  dir_list == ['archive', 'errored', 'input', 'output']
 
     # -- path provided
@@ -131,11 +132,13 @@ def test_dirstruct_bucket(_g):
     fm = _g['fm']
     pwd = _g['pwd']
 
-    fm.setbucket('39c65e13bcb0')
     fm.dir_struct(pwd)
+    fm.setbucket('39c65e13bcb0')
 
     fm.touch(f"{fm.INPUT}/result.txt")
     res = fm.ls(f"{pwd}/fm/input/39c65e13bcb0", fn_only=True)
+    log.debug(fm.ls(fm.INPUT, fn_only=True))
+    log.debug(res)
     assert res  == ['result.txt']
     assert fm.del_files(f"{fm.INPUT}", ['result.txt'])
     assert fm.del_dir(fm.INPUT)
