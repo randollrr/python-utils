@@ -2,7 +2,7 @@ import json
 import pytest
 
 from auto_elastic import ElasticCRUD, ts_range
-from connectors import device_querier as dq
+# from connectors import device_querier as dq
 
 @pytest.mark.parametrize('inp, out', [
     (15, True),
@@ -25,7 +25,7 @@ def test_ts_range(inp, out):
 
 @pytest.mark.parametrize('inp, out, idx', [
     # ({'a_node': '*'}, 1, 'latest-*'),
-    ({'a_node':'blvuslrc01'}, 1, 'latest-*'),
+    ({'a_node':'router01'}, 1, 'latest-*'),
     # ({'sys_message': '(*ROUTING-BGP-5-ADJCHANGE_DETAIL* and (Down or Up)) or '
     #                   '(*RPD_BGP_NEIGHBOR_STATE_CHANGED* and (Idle or Established)) '
     #                   'or (*bgp_recv*)'}, 1, 'backbone_logs-*'),
@@ -48,7 +48,7 @@ def test_read_index_multiple(inp, out, idx):
 
 @pytest.mark.parametrize('i, o', [
     ({'a_node': '*'}, 1),
-    ({'a_node': 'blvuslrc01'}, 1),
+    ({'a_node': 'router01'}, 1),
     (None, 1),
     ({}, 1),
 ])

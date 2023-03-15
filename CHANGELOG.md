@@ -4,85 +4,86 @@
 - auto_fm
 
 
+<br><br>
+
 ## auto_utils.py
 ---
 
-### 1.16
-- add status object
+### 1.18
+- add `ts()`, returns ISO formatted UTC (now) -- non-ISO date, str-based or actual object
+- add `rwjson()`, to read/write json data to the filesystem seemlessly
 
+### 1.17
+- add `next_add(<str>)`, return value +1 from string based numbers
+
+### 1.16
+- add `status` object
 
 ### 1.15
 - remove support for email (REST-based service will be used instead)
 
-
 ### 1.14
 - re-write email support (using smtplib)
-
 
 ### 1.13
 ### 1.12
 
-
 ### 1.11
-- add missing initialization to log.log_filename and made private (log._log_filename)
-
+- add missing initialization to `log.log_filename` and made private (log._log_filename)
 
 ### 1.10
 - show logging on screen only
-- improve log.gethandler()
-
+- improve `log.gethandler()`
 
 ### 1.9
-- add log.reset()
-
+- add `log.reset()`
 
 ### 1.8
 - add support to not save but display a log is ok
 
-
 ### 1.7
 - remove all python 3.7 string formating
 
-
 ### 1.6
-- optimize Config(), make it more flexible to read, write yaml/json file
-- add Config.set(), to set a new configuartion file
-- add Log.config(), to set a new log configuartion
-- optimize Log(), added support for on-screen logging toggle
-- remove Database()
+- optimize `Config()`, make it more flexible to read, write yaml/json file
+- add `Config.set()`, to set a new configuartion file
+- add `Log.config()`, to set a new log configuartion
+- optimize `Log()`, added support for on-screen logging toggle
+- remove `Database()`
 - change params access type
 - add generic config object to be imported
 
+### [backlog]
+- add `status.from_dict(status)`
+- add `status.from_json(status)`
+
+
+<br><br>
 
 ## auto_mongo.py
 ---
 
-[ ### ?.?.? ]
-[ - add aggregation to MongoCRUD.read() ]
-
+### 1.3.5
+- add with_sync_id feature to update() to a randomly generated _sync_id to docs 
 
 ### 1.3.1
-- 2nd update, keeping same version: bugfix with db_name when using db_config
-- added support MongoClient (db_client) connection spawning
+- 2nd update, keeping same version: bugfix with db_name when using `db_config`
+- added support `MongoClient` (`db_client`) connection spawning
 - modified connection creation got sub-process/thread forks
 
-
 ### 1.3.0
-- bugfix with db_name when using db_config
-- fixed read1 with object_id decode.
-- optimized _encode_objectid()
+- bugfix with db_name when using `db_config`
+- fixed `read1()` with encoding/decoding `object_id`
+- optimized `_encode_objectid()`
 - issues with pymongo db/collection objects no longer "implement truth value testing or bool()"
-- change delete() positive confirmation return value to 200 (from 410)
-
+- change `delete()` positive confirmation return value to 200 (from 410)
 
 ### 1.2.3
 - add support projections on read()
 
-
 ### 1.2.2
 - fix issues w/ MongoDB constructor and to use `db` and `collection` object passed to it
 - add support for `collection` and `db` objects initialization in MongoDB and MongoCRUD constructors
-
 
 ### 1.2
 - add default dao and db objects to module
@@ -97,6 +98,11 @@
 - MongoDB: easy connection
 - MongoCRUD: basic CRUD functionalities
 
+### [backlog]
+- add aggregation to MongoCRUD.read()
+
+
+<br><br>
 
 ## auto_fm.py
 ---
