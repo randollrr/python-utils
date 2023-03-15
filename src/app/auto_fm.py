@@ -4,7 +4,7 @@ import re
 from auto_utils import deprecated, log, wd
 
 __authors__ = ['randollrr']
-__version__ = '2.4.1'
+__version__ = '2.4.2'
 
 
 class FileManager:
@@ -91,10 +91,8 @@ class FileManager:
 
         if path:
             self.basedir = '{}/fm'.format(path)
-        u_path = False
         if not self.known_dir:
             self.known_dir = ['archive', 'errored', 'input', 'output']
-            u_path = True
         if known_dir:
             self.known_dir = known_dir
 
@@ -103,8 +101,7 @@ class FileManager:
             i = 0
             for d in self.known_dir:
                 n_path = os.path.join(self.basedir, d, self.bucket)
-                if u_path:
-                    update_path(d, n_path)
+                update_path(d, n_path)
                 if not os.path.exists(n_path):
                     log.info('creating: {}'.format(n_path))
                     os.makedirs(n_path, exist_ok=True)
@@ -283,7 +280,7 @@ class FileManager:
             del t
 
             # -- return simplified list
-            if fn_only:
+            if fn_only and r:
                 if req in ['latest', 'oldest']:
                     r = [r]
                 r = [x[1] for x in r]
