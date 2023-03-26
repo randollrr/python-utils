@@ -109,9 +109,9 @@
 
 ### 2.5.0
 - updated strings to f-string
-- add support for subfolders, relative-path
 - added fm.fullpath, fm.cd(<relative-path>), fm.pwd()
 - add support to fm.ls() to return file/dir object w/ better details
+- add support to create/delete subfolders
 
 ### 2.4.2
 - remove conditional general path update
