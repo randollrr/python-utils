@@ -134,6 +134,43 @@ class FileManager:
             r = True
         return r
 
+    def fullpath(self, path, di=None) -> tuple[str, Status]:
+        r = path
+        s = Status(204, 'Nothing happened')
+
+        _wd = di if di else self._basedir
+
+        def upone(_p, _c=0) -> str:
+            _r, _t, _n = '', _p.split('/'), []
+            _idx = _t.index('..')
+            if _idx:
+                for _i in range(0, len(_t)):
+                    if _i != _t.index('..')-1 and _i != _t.index('..'):
+                        _n += [_t[_i]]
+                _r = '/' if _n and '/'.join(_n) == '' else '/'.join(_n)
+            if '..' in _r:
+                _c += 1
+                _r = upone(_r, _c)
+            if _idx == 0 and _c > 0:
+                _r = '/'
+            return _r
+
+        if isinstance(path, str):
+            if path.startswith('..'):
+                r = upone(f"{_wd}/{path}")
+            elif '..'  in path:
+                r = upone(path)
+            elif path.startswith('.'):
+                r = path.replace('.', f"{_wd}")
+            elif path.endswith('/.'):
+                r = path[:-2]
+            elif path and not path.startswith('/'):
+                r = f"{_wd}/{path}"
+        if r != path:
+            s.code = 200
+            s.message = 'Parsing attempted (successfully).'
+        return r, s
+
     def latest(self, directory=None, fn_pattern=None, fn_only=False, ret='list'):
         """
         See ts_based_file().
@@ -216,43 +253,6 @@ class FileManager:
         if fn_only and ret == 'list' and len(r) > 0:
             return r[0]
         return r
-
-    def fullpath(self, path, di=None) -> tuple[str, Status]:
-        r = path
-        s = Status(204, 'Nothing happened')
-
-        _wd = di if di else self._basedir
-
-        def upone(_p, _c=0) -> str:
-            _r, _t, _n = '', _p.split('/'), []
-            _idx = _t.index('..')
-            if _idx:
-                for _i in range(0, len(_t)):
-                    if _i != _t.index('..')-1 and _i != _t.index('..'):
-                        _n += [_t[_i]]
-                _r = '/' if _n and '/'.join(_n) == '' else '/'.join(_n)
-            if '..' in _r:
-                _c += 1
-                _r = upone(_r, _c)
-            if _idx == 0 and _c > 0:
-                _r = '/'
-            return _r
-
-        if isinstance(path, str):
-            if path.startswith('..'):
-                r = upone(f"{_wd}/{path}")
-            elif '..'  in path:
-                r = upone(path)
-            elif path.startswith('.'):
-                r = path.replace('.', f"{_wd}")
-            elif path.endswith('/.'):
-                r = path[:-2]
-            elif not path.startswith('/'):
-                r = f"{_wd}/{path}"
-        if r != path:
-            s.code = 200
-            s.message = 'Parsing attempted (successfully).'
-        return r, s
 
     def pwd(self) -> str:
         """
