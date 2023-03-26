@@ -20,14 +20,14 @@ except ImportError:
     yaml = None
 
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.18'
+__version__ = '1.19.0'
 
 g = {}
 
 
 def deprecated(func):
     def new_func(*args, **kwargs):
-        warnings.warn("Call to deprecated function {0}.".format(func.__name__),
+        warnings.warn(f"Call to deprecated function {func.__name__}.",
                       category=DeprecationWarning)
         return func(*args, **kwargs)
     new_func.__name__ = func.__name__
@@ -46,10 +46,10 @@ class Config:
 
         # -- check name of config file
         if not self.file:
-            if os.path.exists('{}/config.json'.format(wd())):
-                self.file = '{}/config.json'.format(wd())
-            elif yaml and os.path.exists('{}/config.yaml'.format(wd())):
-                self.file = '{}/config.yaml'.format(wd())
+            if os.path.exists(f"{wd()}/config.json"):
+                self.file = f"{wd()}/config.json"
+            elif yaml and os.path.exists(f"{wd()}/config.yaml"):
+                self.file = f"{wd()}/config.yaml"
 
         # -- read configs
         if self.file:
@@ -191,12 +191,12 @@ class Log:
                                       datefmt='%Y-%m-%d %H:%M:%S +0000')
         # -- file based logging
         if self._config['service']['app-logs']:
+            self._log_filename = f"{self._config['service']['app-logs']}/" \
+                                 f"{self._config['service']['app-name']}.log"
             try:
-                self._log_filename = '{}/{}.log'.format(self._config['service']['app-logs'],
-                                                    self._config['service']['app-name'])
                 file_handler = RotatingFileHandler(self._log_filename, maxBytes=100*1024*1024, backupCount=3)
             except PermissionError:
-                self._log_filename = '/tmp/{}.log'.format(self._config['service']['app-name'])
+                self._log_filename = f"/tmp/{self._config['service']['app-name']}.log"
                 file_handler = RotatingFileHandler(self._log_filename, maxBytes=100*1024*1024, backupCount=3)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
@@ -285,17 +285,26 @@ class Status:
         return self.__repr__()
 
 
-def envar_in(txt):
+def envar(txt) -> str:
+    """
+    Returns environent variable value (if exists).
+    """
+    return os.environ.get(txt) if txt else None
+
+
+def envar_in(txt) -> str:
+    """
+    Returns environment variable value and replace in string.
+    """
     r = txt
     if isinstance(txt, str) and '((env:' in txt and '))' in txt:
-        txt = txt.replace(' ', '')
         s = txt.index('((env:')
         e = txt.index('))')
         v = txt[s:e+2]
         t = os.environ.get(v.replace('((env:', '').replace('))', ''))
         if t:
             r = txt.replace(v, t)
-            del s, e, v, t, txt
+        del s, e, v, t, txt
     return r
 
 
@@ -315,7 +324,6 @@ def next_add(text):
 
     n = digits(text)
     r = f"{text[:-n]}{str(int(text[-n:])+1).zfill(n)}" if n else text
-
     return r
 
 
