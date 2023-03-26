@@ -247,6 +247,8 @@ class FileManager:
                 r = path.replace('.', f"{_wd}")
             elif path.endswith('/.'):
                 r = path[:-2]
+            elif not path.startswith('/'):
+                r = f"{_wd}/{path}"
         if r != path:
             s.code = 200
             s.message = 'Parsing attempted (successfully).'
@@ -286,7 +288,7 @@ class FileManager:
 
     @deprecated
     def setbucket(self, dirname) -> None:
-        """Deprecated to follow snake case."""
+        """Deprecated to follow snake case (better)."""
         self.set_bucket(dirname)
         return
 
@@ -330,6 +332,7 @@ class FileManager:
 
         if not directory:
             directory = self._basedir
+        directory, _ = self.fullpath(directory)
 
         # -- build file list
         log.debug(f"directory: {directory}")
