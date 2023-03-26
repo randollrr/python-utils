@@ -1,7 +1,7 @@
 import pytest
 
 from auto_fm import FileManager
-from auto_utils import log, wd
+from auto_utils import log
 
 
 @pytest.fixture
@@ -15,23 +15,32 @@ def _g():
 def test_dir_struct(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd) # -- default path and directories
 
-    # -- default path and directories
-    fm.dir_struct(pwd)
     # dir_list = [x[1] for x in fm.ls(f"./fm")]
-    dirs = fm.ls()
+    dirs = fm.ls(fm.basedir)
     dir_list = [x[1] for x in dirs]
     assert  dir_list == ['archive', 'errored', 'input', 'output']
+    assert fm.del_dir(fm.ARCHIVE)
+    assert fm.del_dir(fm.ERRORED)
+    assert fm.del_dir(fm.INPUT)
+    assert fm.del_dir(fm.OUTPUT)
+    assert fm.del_dir(pwd)
 
     # -- path provided
     fm.dir_struct(pwd, ['test1', 'test2', 'test3'])
     dir_list = [x[1] for x in fm.ls(f"{pwd}/fm")]
     assert sorted(dir_list) == ['test1', 'test2', 'test3']
+    assert fm.del_dir(f"{fm.pwd()}/test1")
+    assert fm.del_dir(f"{fm.pwd()}/test2")
+    assert fm.del_dir(f"{fm.pwd()}/test3")
+    assert fm.del_dir(pwd)
 
 
 def test_touch(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     log.debug(f"{fm.bucket}")
 
@@ -46,6 +55,7 @@ def test_touch(_g):
 def test_exists(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     assert fm.exists(f"{pwd}/fm/test1/result.1")
     assert fm.exists(f"{pwd}/fm/test2")
@@ -55,6 +65,7 @@ def test_exists(_g):
 def test_list(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     res = fm.ls(f"{pwd}/fm/test1")
     assert  len(res) == 4
@@ -66,6 +77,7 @@ def test_list(_g):
 def test_latest(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     res = fm.latest(f"{pwd}/fm/test1")
     assert  len(res) == 2
@@ -77,6 +89,7 @@ def test_latest(_g):
 def test_oldest(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     res = fm.oldest(f"{pwd}/fm/test1")
     assert  len(res) == 2
@@ -88,6 +101,7 @@ def test_oldest(_g):
 def test_retention(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     fm.retainer(f"{pwd}/fm/test1", 'result', 2)
     files_list = fm.ls(f"{pwd}/fm/test1", fn_only=True)
@@ -97,6 +111,7 @@ def test_retention(_g):
 def test_move(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     res = fm.move('result.3', f"{pwd}/fm/test1", f"{pwd}/fm/test2")
     assert res
@@ -108,6 +123,7 @@ def test_move(_g):
 def test_del_files(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     files_list = fm.ls(f"{pwd}/fm/test2", fn_only=True)
     assert fm.del_files(f"{pwd}/fm/test2", ['result.3'])
@@ -117,6 +133,7 @@ def test_del_files(_g):
 def test_del_dir(_g):
     fm = _g['fm']
     pwd = _g['pwd']
+    fm.dir_struct(pwd)
 
     assert not fm.del_dir(f"{pwd}/fm/test1")
     assert fm.del_files(f"{pwd}/fm/test1", fn_pattern='result.*')
@@ -131,8 +148,8 @@ def test_del_dir(_g):
 def test_dirstruct_bucket(_g):
     fm = _g['fm']
     pwd = _g['pwd']
-
     fm.dir_struct(pwd)
+
     fm.setbucket('39c65e13bcb0')
 
     fm.touch(f"{fm.INPUT}/result.txt")
@@ -141,9 +158,35 @@ def test_dirstruct_bucket(_g):
     log.debug(res)
     assert res  == ['result.txt']
     assert fm.del_files(f"{fm.INPUT}", ['result.txt'])
-    assert fm.del_dir(fm.INPUT)
-    assert fm.del_dir(fm.OUTPUT)
-    assert fm.del_dir(fm.ARCHIVE)
-    assert fm.del_dir(fm.ERRORED)
-    assert fm.del_dir(pwd)
+    # assert fm.del_dir(fm.INPUT)
+    # assert fm.del_dir(fm.OUTPUT)
+    # assert fm.del_dir(fm.ARCHIVE)
+    # assert fm.del_dir(fm.ERRORED)
+    res = fm.del_dir(pwd)
+    assert res
 
+
+@pytest.mark.parametrize('req, ret', [
+    ('', ''),
+    (None, None),
+    ('.', '/workspace/python-utils/src/app'),
+    ('/workspace/python-utils/src/app/.', '/workspace/python-utils/src/app'),
+    ('./', '/workspace/python-utils/src/app/'),
+    ('/workspace/python-utils/src/app/', '/workspace/python-utils/src/app/'),
+    ('./fm', '/workspace/python-utils/src/app/fm'),
+    ('..', '/workspace/python-utils/src'),
+    ('../', '/workspace/python-utils/src/'),
+    ('../..', '/workspace/python-utils'),
+    ('../../', '/workspace/python-utils/'),
+    ('../../..', '/workspace'),
+    ('../../../..', '/'),
+    ('../../../../', '/'),
+    ('../../../../../../../../../../../..', '/'),
+    ('/workspace/python-utils/src/app/../test', '/workspace/python-utils/src/test'),
+    ('/workspace/python-utils/src/app/../../.git', '/workspace/python-utils/.git'),
+    ('/workspace/python-utils/src/app/../../.git/hooks/../logs', '/workspace/python-utils/.git/logs'),
+])
+def test_fullpath(_g, req, ret):
+    mockdata = '/workspace/python-utils/src/app'
+    res, _ = _g['fm'].fullpath(req, di=mockdata)
+    assert res == ret
