@@ -207,7 +207,7 @@ class FileManager:
 
     def mkdirs(self, path) -> Status:
         s = Status(204, 'Nothing happened.')
-        path = self.fullpath(path)
+        path, _ = self.fullpath(path)
         if path:
             try:
                 os.makedirs(path, exist_ok=True)
@@ -329,7 +329,10 @@ class FileManager:
 
     @deprecated
     def setbucket(self, dirname) -> None:
-        """Deprecated to follow func naming convention."""
+        """
+        Deprecated to follow functions naming convention.
+        Use set_bucket() instead.
+        """
         self.set_bucket(dirname)
         return
 
@@ -350,7 +353,7 @@ class FileManager:
 
     def set_returns(self, ret='dict') -> None:
         """
-        Set data output format to 'list', 'dict' or 'json' (default value: dict).
+        Set data output format to 'list', 'dict' or 'json' (default value: list).
         """
         if ret:
             self._output_fmt = ret
