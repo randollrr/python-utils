@@ -2,10 +2,10 @@ import json
 import os
 import re
 
-from auto_utils import deprecated, log, envar_in, Status
+from auto_utils import deprecated, log, envar, Status
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0'
+__version__ = '2.5.0-dev.2'
 
 
 class FileManager:
@@ -29,6 +29,40 @@ class FileManager:
             s.code = s_fp.code
             s.message = s_fp.message
         return s
+
+    def crawl_dir(self, path=None, ret=None) -> tuple[list, Status]:
+        r = []
+        s = Status(204, 'Nothing happened.')
+
+        if not ret or ret == '':
+            ret = 'list'
+        if not path or path == '':
+            path = self.pwd()
+        if isinstance(path, str):
+            path, _ = self.fullpath(path)
+            res = os.walk(path)
+            if res:
+                t = []
+                s.code = 200
+                s.message = 'OK'
+
+                for p in res:
+                    t += [{
+                        'path': p[0],
+                        'dirs': p[1],
+                        'files': p[2],
+                    }]
+                if ret == 'list':
+                    for i in t:
+                        for d in i['dirs']:
+                            for f in i['files']:
+                                r += [f"{i['path']}/{d}/{f}"]
+                            r += [f"{i['path']}/{d}/"]
+                elif ret == 'json':
+                    r = json.dumps(r, indent=4)
+                else:
+                    r = t; del t  # returns dict
+        return r, s
 
     def del_dir(self, path):
         """
@@ -98,9 +132,14 @@ class FileManager:
             elif _p == 'output':
                 self.OUTPUT = _np
 
+        if not path:
+            path = '.'
         path, _ = self.fullpath(path)
         if path:
-            self._basedir = f"{path}/fm"
+            if '/fm' not in path:
+                self._basedir = f"{path}/fm"
+            else:
+                self._basedir = f"{path}/fm"
         if not self.known_dir:
             self.known_dir = ['archive', 'errored', 'input', 'output']
         if known_dir:
@@ -167,6 +206,9 @@ class FileManager:
             s.code = 200
             s.message = 'Parsing attempted (successfully).'
         return r, s
+
+    def is_dir(self, path) -> tuple[bool, Status]:
+        ...
 
     def latest(self, directory=None, fn_pattern=None, fn_only=False, path=None,
                ret=None):
@@ -292,7 +334,7 @@ class FileManager:
         Reset all state.
         """
         self._bucket = bucket if bucket else ''
-        self._basedir = f"{envar_in('((env:PWD))')}"
+        self._basedir = f"{envar('PWD')}"
         self.known_dir = known_dir
         self._output_fmt = 'list'
         self.ARCHIVE = arcdir
@@ -360,7 +402,8 @@ class FileManager:
         return
 
     def touch(self, fn, time=None) -> None:
-        with open(fn, 'a') as f:
+        path, _ = self.fullpath(fn)
+        with open(path, 'a') as f:
             os.utime(f.name, time)
         return
 
@@ -447,5 +490,9 @@ class FileManager:
                         r = [r]
                     r = [x[1] for x in r]
         return r
+
+    def walk(self, path):
+        return self.crawl_dir(path)
+
 
 fm = FileManager()
