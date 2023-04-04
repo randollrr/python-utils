@@ -123,6 +123,8 @@ class FileManager:
         r = False
 
         def update_path(_p, _np):
+            _np = _np[:-1] if _np.endswith('/') else _np
+
             if _p == 'archive':
                 self.ARCHIVE = _np
             elif _p == 'errored':
