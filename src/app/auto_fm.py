@@ -5,7 +5,7 @@ import re
 from auto_utils import deprecated, log, envar, Status
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.2'
+__version__ = '2.5.0-dev.3'
 
 
 class FileManager:
@@ -20,7 +20,7 @@ class FileManager:
 
     def cd(self, newpath) -> Status:
         s = Status(204, 'Nothing happened')
-        n, s_fp = self.fullpath(newpath)
+        n, s_fp = self.fullpath(newpath, status=True)
         if s_fp.code == 200:
             self._basedir = n
             s.code = 200
@@ -39,7 +39,7 @@ class FileManager:
         if not path or path == '':
             path = self.pwd()
         if isinstance(path, str):
-            path, _ = self.fullpath(path)
+            path = self.fullpath(path)
             res = os.walk(path)
             if res:
                 t = []
@@ -134,7 +134,7 @@ class FileManager:
 
         if not path:
             path = '.'
-        path, _ = self.fullpath(path)
+        path = self.fullpath(path)
         if path:
             if '/fm' not in path:
                 self._basedir = f"{path}/fm"
@@ -161,13 +161,13 @@ class FileManager:
             log.error(f"Couldn't setup directory structure.\n{e}")
         return r
 
-    def exists(self, path=None):
+    def exists(self, path=None) -> bool:
         r = False
         if isinstance(path, str) and os.path.exists(path):
             r = True
         return r
 
-    def fullpath(self, path, di=None) -> tuple[str, Status]:
+    def fullpath(self, path, status=False, di=None) -> object:
         r = path
         s = Status(204, 'Nothing happened')
 
@@ -202,10 +202,14 @@ class FileManager:
                 r = path[:-2]
             elif path and not path.startswith('/'):
                 r = f"{_wd}/{path}"
-        if r != path:
+        if self.exists(r):
             s.code = 200
             s.message = 'Parsing attempted (successfully).'
-        return r, s
+
+        if status:
+            return r, s
+        else:
+            return r
 
     def is_dir(self, path) -> tuple[bool, Status]:
         ...
@@ -249,7 +253,7 @@ class FileManager:
 
     def mkdirs(self, path) -> Status:
         s = Status(204, 'Nothing happened.')
-        path, _ = self.fullpath(path)
+        path = self.fullpath(path)
         if path:
             try:
                 os.makedirs(path, exist_ok=True)
@@ -402,7 +406,7 @@ class FileManager:
         return
 
     def touch(self, fn, time=None) -> None:
-        path, _ = self.fullpath(fn)
+        path = self.fullpath(fn)
         with open(path, 'a') as f:
             os.utime(f.name, time)
         return
@@ -429,7 +433,7 @@ class FileManager:
             ret = self._output_fmt
         if not directory:
             directory = self.pwd()
-        directory, _ = self.fullpath(directory)
+        directory = self.fullpath(directory)
 
         # -- build file list
         log.debug(f"directory: {directory}")
