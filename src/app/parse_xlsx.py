@@ -1,0 +1,143 @@
+from datetime import datetime
+import json
+
+import pandas as pd
+
+from auto_utils import deprecated, log
+from auto_mongo import dao
+
+__version__ = '0.2.1'
+
+
+class XlsxDataCollector:
+
+    def __init__(self, filename, sheetname=None, transformer=None, auto_parse=True):
+        self.data = []
+        self.filename = filename
+        self.xls_file = None
+        self.sheetname = sheetname
+        self.transformer = transformer if isinstance(transformer, dict) else None
+
+        # -- read file and parse
+        if auto_parse:
+            self.read_file()
+            self.read_sheet()
+            self.parse()
+        return
+
+    # def __new__(cls, filename, sheetname=None, transformer=None):
+    #     cls.__init__(filename, sheetname, transformer)
+    #     return cls.get_data()
+
+    def get_data(self):
+        return self.data
+
+    def read_file(self, filename=None):
+        ext = None
+
+        if filename:
+            self.filename = filename
+
+        if self.filename:
+            ext = str(self.filename)[len(self.filename)-4:][:4]
+
+        if ext == 'xlsx':
+            self.xls_file = pd.ExcelFile(self.filename)
+        else:
+            log.error('File type error, Excel (xlsx) file is expected.')
+
+    def read_sheet(self, sheetname=None, sort_by=None, header=None):
+
+        if not sheetname and not self.sheetname:
+            self.sheetname = 0
+        elif sheetname:
+            self.sheetname = sheetname
+
+        if self.xls_file:
+            try:
+                list_cols = None
+                if self.transformer:
+                    list_cols = self.transformer.keys()
+                df = pd.read_excel(
+                    self.xls_file,
+                    sheet_name=self.sheetname,
+                    usecols=list_cols,
+                    header=[9, 10])
+                if sort_by:
+                    df = df.sort_values(by=sort_by)
+                data = df.fillna('').to_dict('records')
+                del df
+
+                self.data = []
+                for d in data:
+                    t_rec = {}
+                    for k in d:
+                        if self.transformer:
+                            t_rec.update({self.transformer[k]: d[k]})
+                        else:
+                            t_rec.update({k: d[k]})
+                    self.data += [t_rec]
+                del data
+            except Exception as e:
+                self.data = []
+                log.error(f"Parsing issues (w/ Pandas) encountered.\n {e}")
+
+        return self.data
+
+    def parse(self):
+        pass
+
+    @deprecated
+    def save2db(self, data=None, collection=None, truncate=False, where={}):
+        """Deprecated: for a more conventional function name."""
+        return self.save_to_db(data=data, collection=collection,
+                               truncate=truncate, where=where)
+
+    def save_to_db(self, data=None, collection=None, truncate=False, where={}):
+        r = None
+        if not data:
+            data = self.data
+        if not collection:
+            collection = 'parsed_xlsx_data'
+        if data:
+            if truncate:
+                dao.delete(
+                    dao.read(where=where, collection=collection)['data'],
+                    collection=collection)
+            r = dao.create(data, collection)
+        return r
+
+    def to_date(self, dt):
+        r = dt
+        try:
+            r = datetime.strftime(datetime.strptime(dt, '%m/%d/%Y'), '%Y-%m-%d')
+        except:
+            try:
+                r = datetime.strftime(datetime.strptime(dt.replace('PST', '')
+                        .replace('PDT', '')
+                        .replace('\t', '')
+                        .strip(),
+                        '%b %d, %Y'),
+                    '%Y-%m-%d')
+            except:
+                pass
+
+        return r
+
+    def to_dict(self):
+        return self.data
+
+    def to_json(self):
+        r = None
+        if self.data:
+            r = json.dumps(self.data)
+
+        return r
+
+
+# CHANGELOG
+# v0.1.0 Initial implementation
+# v0.2.0 optimized read_sheet():
+# - support no transformers
+# - support headers w/ multi-row or start row other than zero
+# v0.2.1 added support for auto_parse=true|false in constructor (default: True)
