@@ -20,9 +20,10 @@ except ImportError:
     yaml = None
 
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.19.0'
+__version__ = '1.20.0'
 
 g = {}
+UTILS_PART_OF_COMMON = False
 
 
 def deprecated(func):
@@ -327,23 +328,29 @@ def next_add(text):
     return r
 
 
-def rwjson(action, fn) -> None:
+def rwjson(action, key_fn) -> None:
+    """
+    This function automatically creates a local json file based on the key name.
+    To access the data also import "g" the module variable.
+    :param action: pass "read" or "write" as action to be performed
+    :param key_fn: key name provided will be also the local filename
+    """
+    g.setdefault(key_fn, None)
     # -- override default parameters
     if not g.get('_rwpath'):
         g['_rwpath'] = wd()
     if not g.get('_rwfn'):
-        g['_rwfn'] = f"_{fn}.json"
+        g['_rwfn'] = f"_{key_fn}.json"
     # -- known behaviors
     if action == 'read':
         try:
-            g.setdefault(fn, None)
             with open(f"{g['_rwpath']}/{g['_rwfn']}", 'r') as f:
-                g[fn] = json.load(f)
+                g[key_fn] = json.load(f)
         except:
             pass
     if action == 'write':
         with open(f"{g['_rwpath']}/{g['_rwfn']}", 'w') as f:
-            json.dump(g[fn], f)
+            json.dump(g[key_fn], f)
     return
 
 
@@ -363,7 +370,8 @@ def wd():
     Provide the Working Directory where the auto_utils script is located.
     :return wd: string description
     """
-    path = os.path.realpath(__file__).split('/')
+    app_root = '/..' if UTILS_PART_OF_COMMON else ''
+    path = os.path.realpath(f"{__file__}{app_root}").split('/')
     return '/'.join(path[:len(path)-1])
 
 
