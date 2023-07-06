@@ -5,7 +5,7 @@ import re
 from auto_utils import deprecated, log, envar, Status
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.3'
+__version__ = '2.5.0-dev.4'
 
 
 class FileManager:
@@ -141,7 +141,7 @@ class FileManager:
             if '/fm' not in path:
                 self._basedir = f"{path}/fm"
             else:
-                self._basedir = f"{path}/fm"
+                self._basedir = f"{path}"
         if not self.known_dir:
             self.known_dir = ['archive', 'errored', 'input', 'output']
         if known_dir:
@@ -434,7 +434,7 @@ class FileManager:
         if not ret:
             ret = self._output_fmt
         if not directory:
-            directory = self.pwd()
+            directory = self.INPUT if self.INPUT else self.pwd()
         directory = self.fullpath(directory)
 
         # -- build file list
