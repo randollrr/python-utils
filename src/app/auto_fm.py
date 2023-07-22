@@ -113,7 +113,7 @@ class FileManager:
                 log.debug('Expected a list of files or a path with flag "dir=True"')
         return r
 
-    def dir_struct(self, path=None, known_dir=None):
+    def dir_struct(self, path=None, known_dir=None, auto_create=True):
         """
         Check directory structure. If not valid, create structure.
         :param path: filesystem full path
@@ -155,7 +155,10 @@ class FileManager:
                 update_path(d, n_path)
                 if not os.path.exists(n_path):
                     log.info(f"creating: {n_path}")
-                    os.makedirs(n_path)
+                    if auto_create:
+                        os.makedirs(n_path)
+                    else:
+                        log.info(f"  auto_create is off, did not create: {n_path}")
                 else:
                     log.info(f"already exists: {n_path}")
             r = True
@@ -384,7 +387,7 @@ class FileManager:
         self.set_bucket(dirname)
         return
 
-    def set_bucket(self, dirname) -> None:
+    def set_bucket(self, dirname, auto_create=True) -> None:
         """
         Add a "bucket" to directory structure.
         :param dirname: name to set the subdirectory
@@ -392,7 +395,7 @@ class FileManager:
         """
         if not self._bucket:
             self._bucket = str(dirname)
-            self.dir_struct()
+            self.dir_struct(auto_create=auto_create)
             log.info(f"Bucket is now set to: {self._bucket}.")
         else:
             log.info(f"Buckets cannot be reset to a different name ({dirname}). "
