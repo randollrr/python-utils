@@ -159,6 +159,7 @@ class FileManager:
                         os.makedirs(n_path)
                     else:
                         log.info(f"  auto_create is off, did not create: {n_path}")
+                        return r
                 else:
                     log.info(f"already exists: {n_path}")
             r = True
