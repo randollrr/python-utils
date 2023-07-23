@@ -6,7 +6,6 @@ for many apps or scripts. A generic lib to access:
 * email servers for notifications,
 * [and maybe simple encryption, etc...]
 """
-from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 import logging
@@ -57,15 +56,21 @@ class Config:
             if os.path.exists(self.file):
                 self.read()
 
-    def file_type(self):
+    def file_type(self, change_to=None):
         """
-        Check file type: json or yaml
+        Change or return current file type.
+        :param change_to: json or yaml
+        :return: current file type
         """
-        ft = 'json'
-
-        t = self.file.split('.')[len(self.file.split('.'))-1]
-        if t == 'yaml' or t == 'yml':
-            ft = 'yaml'
+        t_split = self.file.split('.')
+        t = t_split[len(t_split)-1]
+        if isinstance(change_to, str):
+            ft = change_to
+            self.file = f"{'.'.join(t_split[:len(t_split)-1])}.{change_to}"
+        else:
+            ft = 'json'
+            if t == 'yaml' or t == 'yml':
+                ft = 'yaml'
         return ft
 
     def __getitem__(self, item):
@@ -236,7 +241,6 @@ class Email:
         ...
 
 
-@dataclass
 class Status:
     """
     Status codes for APIs
