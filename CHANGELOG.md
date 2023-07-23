@@ -9,6 +9,9 @@
 ## auto_utils.py
 ---
 
+### 1.21.0
+- add change_to to config.file_type()
+
 ### 1.18
 - add `ts()`, returns ISO formatted UTC (now) -- non-ISO date, str-based or actual object
 - add `rwjson()`, to read/write json data to the filesystem seemlessly
@@ -112,6 +115,7 @@
 - added fm.fullpath, fm.cd(<relative-path>), fm.pwd()
 - add support to fm.ls() to return file/dir object w/ better details
 - add support to create/delete subfolders
+- added auto_create feature to dir_struct() and set_bucket()
 
 ### 2.4.2
 - remove conditional general path update
