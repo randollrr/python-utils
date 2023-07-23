@@ -5,7 +5,7 @@ import re
 from auto_utils import deprecated, log, envar, Status
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.4'
+__version__ = '2.5.0-dev.5'
 
 
 class FileManager:
