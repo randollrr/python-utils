@@ -6,7 +6,7 @@ import pandas as pd
 from auto_utils import deprecated, log
 from auto_mongo import dao
 
-__version__ = '0.2.1'
+__version__ = '0.2.3'
 
 
 class XlsxDataCollector:
@@ -46,8 +46,8 @@ class XlsxDataCollector:
         else:
             log.error('File type error, Excel (xlsx) file is expected.')
 
-    def read_sheet(self, sheetname=None, sort_by=None, header=None):
-
+    def read_sheet(self, sheetname=None, sort_by=None, headers=0, ret='dict'):
+        r = None
         if not sheetname and not self.sheetname:
             self.sheetname = 0
         elif sheetname:
@@ -62,11 +62,10 @@ class XlsxDataCollector:
                     self.xls_file,
                     sheet_name=self.sheetname,
                     usecols=list_cols,
-                    header=[9, 10])
+                    header=headers)
                 if sort_by:
                     df = df.sort_values(by=sort_by)
                 data = df.fillna('').to_dict('records')
-                del df
 
                 self.data = []
                 for d in data:
@@ -77,12 +76,12 @@ class XlsxDataCollector:
                         else:
                             t_rec.update({k: d[k]})
                     self.data += [t_rec]
-                del data
+                r = df if ret == 'df' else self.data
+                del df, data
             except Exception as e:
                 self.data = []
                 log.error(f"Parsing issues (w/ Pandas) encountered.\n {e}")
-
-        return self.data
+        return r
 
     def parse(self):
         pass
@@ -121,7 +120,6 @@ class XlsxDataCollector:
                     '%Y-%m-%d')
             except:
                 pass
-
         return r
 
     def to_dict(self):
@@ -131,7 +129,6 @@ class XlsxDataCollector:
         r = None
         if self.data:
             r = json.dumps(self.data)
-
         return r
 
 
@@ -141,3 +138,5 @@ class XlsxDataCollector:
 # - support no transformers
 # - support headers w/ multi-row or start row other than zero
 # v0.2.1 added support for auto_parse=true|false in constructor (default: True)
+# v0.2.2 added support for read_sheet() to return parsed dict or the df (DataFrame)
+# v0.2.3 bugfix: return var used before assigned
