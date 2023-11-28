@@ -1,8 +1,8 @@
 import json
 import time
 
-from auto_mongo import dao
-from auto_utils import log
+from common.mongo import dao
+from common.utils import log
 
 __version__ = '1.0.2'
 _caching = {}
