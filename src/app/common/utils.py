@@ -22,7 +22,7 @@ __authors__ = ['randollrr', 'msmith8']
 __version__ = '1.21.0'
 
 g = {}
-UTILS_PART_OF_COMMON = False
+UTILS_PART_OF_COMMON = True
 
 
 def deprecated(func):
