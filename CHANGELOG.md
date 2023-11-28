@@ -1,7 +1,7 @@
 # python-utils
-- auto_utils
-- auto_mongo
-- auto_fm
+- common.utils
+- common.mongo
+- common.fm
 
 
 <br><br>
