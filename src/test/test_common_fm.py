@@ -1,7 +1,7 @@
 import pytest
 
-from auto_fm import FileManager
-from auto_utils import log
+from common.fm import FileManager
+from common.utils import log
 
 
 @pytest.fixture
