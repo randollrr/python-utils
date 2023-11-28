@@ -1,6 +1,6 @@
 
 import pytest
-from auto_utils import config, envar, envar_in, Email, log, Status, next_add
+from common.utils import config, envar, envar_in, Email, log, Status, next_add
 
 
 def test_config_file_type():
