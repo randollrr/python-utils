@@ -3,8 +3,8 @@ import json
 
 import pandas as pd
 
-from auto_utils import deprecated, log
-from auto_mongo import dao
+from common.utils import deprecated, log
+from common.mongo import dao
 
 __version__ = '0.2.3'
 
