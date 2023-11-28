@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from auto_utils import config, log, Status
+from common.utils import config, log, Status
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 
