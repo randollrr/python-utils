@@ -15,7 +15,7 @@ from pymongo.database import Collection, Database
 from pymongo.errors import ServerSelectionTimeoutError
 from bson import ObjectId, SON
 
-from auto_utils import config, log
+from common.utils import config, log
 
 
 class MongoDB:
