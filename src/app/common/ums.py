@@ -8,7 +8,7 @@ import time
 
 import requests
 
-# from auto_utils import log
+# from common.utils import log
 
 __version__ = '1.0.5'
 
@@ -27,13 +27,13 @@ class Authentication:
     """
     def __init__(self, authen_fn=None, username=None, passwd=None):
         self.obj = None
-        self.authen_fn = './authen.json' if not authen_fn else authen_fn
+        self.authen_fn = 'authen.json' if not authen_fn else authen_fn
         self.reset()
         self.get_token(username, passwd)
 
     def _fscache(self, action):
         """
-        Retrieve/create "./authen.json" file.
+        Retrieve/create "authen.json" file.
         """
         log.info('Get local cached token.')
 
@@ -138,3 +138,4 @@ else:
 #        added CLI support for username and password
 # v1.0.4 added usage()
 # v1.0.5 remove dependency on auto_utils log object
+# v1.0.6 minor updates: removed all './'

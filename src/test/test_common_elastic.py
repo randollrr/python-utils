@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from auto_elastic import ElasticCRUD, ts_range
+from common.elastic import ElasticCRUD, ts_range
 # from connectors import device_querier as dq
 
 @pytest.mark.parametrize('inp, out', [

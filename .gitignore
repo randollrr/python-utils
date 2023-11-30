@@ -32,3 +32,5 @@ target/
 # unlisted
 auto_mysql.py
 auto_emails.py
+mockdata.json
+mockctl

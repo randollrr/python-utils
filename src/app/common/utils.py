@@ -6,7 +6,6 @@ for many apps or scripts. A generic lib to access:
 * email servers for notifications,
 * [and maybe simple encryption, etc...]
 """
-from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 import logging
@@ -20,14 +19,15 @@ except ImportError:
     yaml = None
 
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.18'
+__version__ = '1.21.0'
 
 g = {}
+UTILS_PART_OF_COMMON = True
 
 
 def deprecated(func):
     def new_func(*args, **kwargs):
-        warnings.warn("Call to deprecated function {0}.".format(func.__name__),
+        warnings.warn(f"Call to deprecated function {func.__name__}.",
                       category=DeprecationWarning)
         return func(*args, **kwargs)
     new_func.__name__ = func.__name__
@@ -46,25 +46,31 @@ class Config:
 
         # -- check name of config file
         if not self.file:
-            if os.path.exists('{}/config.json'.format(wd())):
-                self.file = '{}/config.json'.format(wd())
-            elif yaml and os.path.exists('{}/config.yaml'.format(wd())):
-                self.file = '{}/config.yaml'.format(wd())
+            if os.path.exists(f"{wd()}/config.json"):
+                self.file = f"{wd()}/config.json"
+            elif yaml and os.path.exists(f"{wd()}/config.yaml"):
+                self.file = f"{wd()}/config.yaml"
 
         # -- read configs
         if self.file:
             if os.path.exists(self.file):
                 self.read()
 
-    def file_type(self):
+    def file_type(self, change_to=None):
         """
-        Check file type: json or yaml
+        Change or return current file type.
+        :param change_to: json or yaml
+        :return: current file type
         """
-        ft = 'json'
-
-        t = self.file.split('.')[len(self.file.split('.'))-1]
-        if t == 'yaml' or t == 'yml':
-            ft = 'yaml'
+        t_split = self.file.split('.')
+        t = t_split[len(t_split)-1]
+        if isinstance(change_to, str):
+            ft = change_to
+            self.file = f"{'.'.join(t_split[:len(t_split)-1])}.{change_to}"
+        else:
+            ft = 'json'
+            if t == 'yaml' or t == 'yml':
+                ft = 'yaml'
         return ft
 
     def __getitem__(self, item):
@@ -191,12 +197,12 @@ class Log:
                                       datefmt='%Y-%m-%d %H:%M:%S +0000')
         # -- file based logging
         if self._config['service']['app-logs']:
+            self._log_filename = f"{self._config['service']['app-logs']}/" \
+                                 f"{self._config['service']['app-name']}.log"
             try:
-                self._log_filename = '{}/{}.log'.format(self._config['service']['app-logs'],
-                                                    self._config['service']['app-name'])
                 file_handler = RotatingFileHandler(self._log_filename, maxBytes=100*1024*1024, backupCount=3)
             except PermissionError:
-                self._log_filename = '/tmp/{}.log'.format(self._config['service']['app-name'])
+                self._log_filename = f"/tmp/{self._config['service']['app-name']}.log"
                 file_handler = RotatingFileHandler(self._log_filename, maxBytes=100*1024*1024, backupCount=3)
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
@@ -235,7 +241,6 @@ class Email:
         ...
 
 
-@dataclass
 class Status:
     """
     Status codes for APIs
@@ -285,17 +290,26 @@ class Status:
         return self.__repr__()
 
 
-def envar_in(txt):
+def envar(txt) -> str:
+    """
+    Returns environent variable value (if exists).
+    """
+    return os.environ.get(txt) if txt else None
+
+
+def envar_in(txt) -> str:
+    """
+    Returns environment variable value and replace in string.
+    """
     r = txt
     if isinstance(txt, str) and '((env:' in txt and '))' in txt:
-        txt = txt.replace(' ', '')
         s = txt.index('((env:')
         e = txt.index('))')
         v = txt[s:e+2]
         t = os.environ.get(v.replace('((env:', '').replace('))', ''))
         if t:
             r = txt.replace(v, t)
-            del s, e, v, t, txt
+        del s, e, v, t, txt
     return r
 
 
@@ -315,27 +329,32 @@ def next_add(text):
 
     n = digits(text)
     r = f"{text[:-n]}{str(int(text[-n:])+1).zfill(n)}" if n else text
-
     return r
 
 
-def rwjson(action, fn) -> None:
+def rwjson(action, key_fn) -> None:
+    """
+    This function automatically creates a local json file based on the key name.
+    To access the data also import "g" the module variable.
+    :param action: pass "read" or "write" as action to be performed
+    :param key_fn: key name provided will be also the local filename
+    """
+    g.setdefault(key_fn, None)
     # -- override default parameters
     if not g.get('_rwpath'):
         g['_rwpath'] = wd()
     if not g.get('_rwfn'):
-        g['_rwfn'] = f"_{fn}.json"
+        g['_rwfn'] = f"_{key_fn}.json"
     # -- known behaviors
     if action == 'read':
         try:
-            g.setdefault(fn, None)
             with open(f"{g['_rwpath']}/{g['_rwfn']}", 'r') as f:
-                g[fn] = json.load(f)
+                g[key_fn] = json.load(f)
         except:
             pass
     if action == 'write':
         with open(f"{g['_rwpath']}/{g['_rwfn']}", 'w') as f:
-            json.dump(g[fn], f)
+            json.dump(g[key_fn], f)
     return
 
 
@@ -355,7 +374,8 @@ def wd():
     Provide the Working Directory where the auto_utils script is located.
     :return wd: string description
     """
-    path = os.path.realpath(__file__).split('/')
+    app_root = '/..' if UTILS_PART_OF_COMMON else ''
+    path = os.path.realpath(f"{__file__}{app_root}").split('/')
     return '/'.join(path[:len(path)-1])
 
 
