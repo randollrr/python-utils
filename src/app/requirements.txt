@@ -1,18 +1,18 @@
-# -- for common use
+# -- for common.utils
 requests
 pyyaml
 
-# -- for auto_mongo.py
+# -- for common.mongo
 pymongo
 
-# -- for auto_elastic.py
+# -- for common.elastic
 elasticsearch
 elasticsearch_dsl
 
-# -- for parse_xlsx.py
+# -- for common.parse_xlsx
 pandas
 xlrd
 openpyxl
 
-# -- for scheduler.py
+# -- for common.scheduler
 croniter
