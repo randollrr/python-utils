@@ -10,7 +10,7 @@ Python-Utils is intended to be a swiss-army-knife toolbox that houses boilerplat
 
 ## Tools by lib:
 
-- [common.utils](auto_utils.md): add support for log, config, etc...
+- [common.utils](common_utils.md): add support for log, config, etc...
 - [common.mongo](common_mongo.md): add basic MongoDB CRUD support to your script/app
 - [common.fm](common_fm.md): basic file management (file processing most common tasks)
 <br/><br/>
