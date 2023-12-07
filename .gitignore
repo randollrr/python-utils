@@ -33,4 +33,6 @@ target/
 auto_mysql.py
 auto_emails.py
 mockdata.json
+mockctl
+src/app/common/ums.py
 

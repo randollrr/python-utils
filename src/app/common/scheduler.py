@@ -11,7 +11,7 @@ import threading
 from croniter import croniter
 
 # -- project-libs
-from auto_utils import config, log
+from common.utils import config, log
 
 __version__ = '1.0.1'
 

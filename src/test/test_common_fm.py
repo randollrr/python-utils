@@ -1,9 +1,9 @@
 import pytest
 
-from auto_fm import FileManager
-from auto_utils import log, wd
+from common.fm import FileManager
+from common.utils import log, wd
 
-_g = {'pwd': f'{wd()}/dirstruct'}
+_g = {}
 
 
 @pytest.fixture

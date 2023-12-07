@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from auto_mongo import db, dao, MongoDB, MongoCRUD
-from auto_utils import log
+from common.mongo import db, dao, MongoDB, MongoCRUD
+from common.utils import log
 
 log.reset()
 object_ids = {}

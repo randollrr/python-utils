@@ -18,8 +18,8 @@ try:
 except ImportError:
     pass
 
-from utils import Config
-from utils import log
+from common.utils import Config
+from common.utils import log
 
 
 class Database:

@@ -1,0 +1,18 @@
+# -- for common.utils
+requests
+pyyaml
+
+# -- for common.mongo
+pymongo
+
+# -- for common.elastic
+elasticsearch
+elasticsearch_dsl
+
+# -- for common.parse_xlsx
+pandas
+xlrd
+openpyxl
+
+# -- for common.scheduler
+croniter

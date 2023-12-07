@@ -1,6 +1,6 @@
 
 import pytest
-from auto_utils import config, envar, envar_in, Email, log, Status, next_add
+from common.utils import config, envar, envar_in, Email, log, Status, next_add
 
 
 def test_config_file_type():
@@ -19,9 +19,9 @@ def test_config_get(i, o):
 @pytest.mark.parametrize('i, o', [
     (None, None),
     (8, 8),
-    ('APP_RUNTIME_NAME', 'APP_RUNTIME_NAME'),
-    ('((env:APP_RUNTIME_NAME))', 'app'),
-    ('/usr/bin/((env:APP_RUNTIME_NAME)).sh', '/usr/bin/app.sh'),
+    ('APP_NAME', 'APP_NAME'),
+    ('((env:APP_NAME))', 'app'),
+    ('/usr/bin/((env:APP_NAME)).sh', '/usr/bin/app.sh'),
     ('this is the path: "((env:PYTHONPATH))", we were talking about',
      'this is the path: "./src/app:./src/test", we were talking about')
 ])
