@@ -66,6 +66,9 @@
 ## auto_mongo.py
 ---
 
+### 1.4.0
+- add timestamp updated_dt by default (param: add_ts=True)
+
 ### 1.3.5
 - add with_sync_id feature to update() to a randomly generated _sync_id to docs
 
