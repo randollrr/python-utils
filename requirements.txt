@@ -1,4 +1,0 @@
-pymongo
-pyyaml
-elasticsearch
-elasticsearch_dsl

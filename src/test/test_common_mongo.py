@@ -2,11 +2,25 @@ import json
 
 import pytest
 
-from auto_mongo import db, dao, MongoDB, MongoCRUD
-from auto_utils import log
+from common.mongo import db, dao, MongoDB, MongoCRUD
+from common.utils import log
 
 log.reset()
 object_ids = {}
+
+
+def test_connection():
+    dao.connector.status()
+    assert db.status()
+    assert dao.connector.connected
+    assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
+    assert MongoDB(db_obj=dao.connector.db).status()
+    assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
+    dao.connector.close()
+    assert not dao.connector.connected
+    # assert not db.status()  # can no longer use db after closing connection
+    # db.connect()            # as of MongoDB 4.2.2+
+    # assert dao.connector.connected
 
 
 def test_create():
@@ -111,17 +125,3 @@ def test_teardown_test():
     # dbo.drop_collection('test')
     # dbo.client.drop_database('test_db')
     dao.delete(dao.read({}, 'test')['data'], 'test')
-
-
-def test_connection():
-    dao.connector.status()
-    assert db.status()
-    assert dao.connector.connected
-    assert MongoDB(collection_obj=dao.collection, db_obj=dao.connector.db).status()
-    assert MongoDB(db_obj=dao.connector.db).status()
-    assert not MongoDB(collection_obj='invalid value', db_obj='invalid value').status()
-    dao.connector.close()
-    assert not dao.connector.connected
-    # assert not db.status()  # can no longer use db after closing connection
-    # db.connect()            # as of MongoDB 4.2.2+
-    # assert dao.connector.connected

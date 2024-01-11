@@ -1,3 +1,8 @@
+service:
+  app-logs: null
+  app-name: app
+  log-level: DEBUG
+  log-stdout: true
 external-api:
   base-url: https://api.somewhere.com
   keys: ((env:API_KEYS))
@@ -7,7 +12,7 @@ mongo.dev:
   authenticationDatabase: ''
   collection: test
   database: test_db
-  host: localhost
+  host: host.docker.internal
   password: null
   port: 27017
   username: null
@@ -24,8 +29,3 @@ sendmail:
   reply-to: null
   server: restful.email.com
   to: you@email.com
-service:
-  app-logs: null
-  app-name: app
-  log-level: DEBUG
-  log-stdout: true

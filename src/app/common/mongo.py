@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.3.8'
+__version__ = '1.4.0'
 
 from copy import deepcopy
 import os
@@ -15,7 +15,7 @@ from pymongo.database import Collection, Database
 from pymongo.errors import ServerSelectionTimeoutError
 from bson import ObjectId, SON
 
-from auto_utils import config, log
+from common.utils import config, log, ts
 
 
 class MongoDB:
@@ -139,7 +139,7 @@ class MongoCRUD:
                 log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
 
 
-    def create(self, doc=None, collection=None, db=None):
+    def create(self, doc=None, collection=None, db=None, add_ts=True):
         """
         Insert objects.
         :param doc: data to be inserted.
@@ -158,10 +158,15 @@ class MongoCRUD:
             ins = None
             data = self._encode_objectid(data)
             if isinstance(data, dict):
+                if add_ts:
+                    data['updated_dt'] = ts()
                 ins = self.collection.insert_one(data)
                 r = self._decode_objectid(ins.inserted_id)
                 count = 1 if r else 0
             elif isinstance(data, list):
+                for d in data:
+                    if isinstance(d, dict) and add_ts:
+                        d['updated_dt'] = ts()
                 ins = self.collection.insert_many(data)
                 r = ins.inserted_ids
                 count = len(r)
@@ -246,7 +251,7 @@ class MongoCRUD:
             r = self._decode_objectid(data[0])
         return r
 
-    def update(self, doc=None, collection=None, db=None, where=None, like=None, set=None, with_sync_id=False):
+    def update(self, doc=None, collection=None, db=None, where=None, like=None, set=None, with_sync_id=False, add_ts=True):
         """
         :param doc: new version of database object to update
         :param collection: to change collection/table
@@ -267,6 +272,9 @@ class MongoCRUD:
         try:
             if isinstance(data, dict):
                 data = self._encode_objectid(data)
+                if add_ts:
+                    data['updated_dt'] = ts()
+
                 if with_sync_id:
                     verifier = self.read1({'_id': data['_id'],
                         '_sync_id': data.get('_sync_id') or {'$exists': False}}, collection)

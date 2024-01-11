@@ -1,13 +1,16 @@
 # python-utils
-- auto_utils
-- auto_mongo
-- auto_fm
+- common.utils
+- common.mongo
+- common.fm
 
 
 <br><br>
 
 ## auto_utils.py
 ---
+
+### 1.21.0
+- add change_to to config.file_type()
 
 ### 1.18
 - add `ts()`, returns ISO formatted UTC (now) -- non-ISO date, str-based or actual object
@@ -63,6 +66,9 @@
 ## auto_mongo.py
 ---
 
+### 1.4.0
+- add timestamp updated_dt by default (param: add_ts=True)
+
 ### 1.3.5
 - add with_sync_id feature to update() to a randomly generated _sync_id to docs
 
@@ -109,9 +115,10 @@
 
 ### 2.5.0
 - updated strings to f-string
-- add support for subfolders, relative-path
 - added fm.fullpath, fm.cd(<relative-path>), fm.pwd()
 - add support to fm.ls() to return file/dir object w/ better details
+- add support to create/delete subfolders
+- added auto_create feature to dir_struct() and set_bucket()
 
 ### 2.4.2
 - remove conditional general path update
