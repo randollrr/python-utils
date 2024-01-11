@@ -12,7 +12,7 @@ mongo.dev:
   authenticationDatabase: ''
   collection: test
   database: test_db
-  host: localhost
+  host: host.docker.internal
   password: null
   port: 27017
   username: null
