@@ -3,10 +3,10 @@ import json
 
 import pandas as pd
 
-from common.utils import deprecated, log
-from common.mongo import dao
+from auto_utils import deprecated, log
+from auto_mongo import dao
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 class XlsxDataCollector:
@@ -33,54 +33,54 @@ class XlsxDataCollector:
         return self.data
 
     def read_file(self, filename=None):
-        ext = None
+        fn = '[common.parse_xlsx][read_file]'
 
         if filename:
             self.filename = filename
-
-        if self.filename:
-            ext = str(self.filename)[len(self.filename)-4:][:4]
-
-        if ext == 'xlsx':
+        try:
             self.xls_file = pd.ExcelFile(self.filename)
-        else:
-            log.error('File type error, Excel (xlsx) file is expected.')
+        except Exception as e:
+            log.error(f"{fn} : File type error, Excel (xlsx) file is expected. \n{e}")
 
     def read_sheet(self, sheetname=None, sort_by=None, headers=0, ret='dict'):
+        """Reads the sheet and returns the data as a list of dict."""
+        fn = '[common.parse_xlsx][read_sheet]'
         r = None
+
+        log.info(f'{fn} : Reading sheet: {sheetname}...')
+
         if not sheetname and not self.sheetname:
             self.sheetname = 0
         elif sheetname:
             self.sheetname = sheetname
 
-        if self.xls_file:
-            try:
-                list_cols = None
-                if self.transformer:
-                    list_cols = self.transformer.keys()
-                df = pd.read_excel(
-                    self.xls_file,
-                    sheet_name=self.sheetname,
-                    usecols=list_cols,
-                    header=headers)
-                if sort_by:
-                    df = df.sort_values(by=sort_by)
-                data = df.fillna('').to_dict('records')
+        try:
+            list_cols = None
+            if self.transformer:
+                list_cols = self.transformer.keys()
+            df = pd.read_excel(
+                self.xls_file,
+                sheet_name=self.sheetname,
+                usecols=list_cols,
+                header=headers)
+            if sort_by:
+                df = df.sort_values(by=sort_by)
+            data = df.fillna('').to_dict('records')
 
-                self.data = []
-                for d in data:
-                    t_rec = {}
-                    for k in d:
-                        if self.transformer:
-                            t_rec.update({self.transformer[k]: d[k]})
-                        else:
-                            t_rec.update({k: d[k]})
-                    self.data += [t_rec]
-                r = df if ret == 'df' else self.data
-                del df, data
-            except Exception as e:
-                self.data = []
-                log.error(f"Parsing issues (w/ Pandas) encountered.\n {e}")
+            self.data = []
+            for d in data:
+                t_rec = {}
+                for k in d:
+                    if self.transformer:
+                        t_rec.update({self.transformer[k]: d[k]})
+                    else:
+                        t_rec.update({k: d[k]})
+                self.data += [t_rec]
+            r = df if ret == 'df' else self.data
+            del df, data
+        except Exception as e:
+            self.data = []
+            log.error(f"{fn} : Parsing issues (w/ Pandas) encountered.\n {e}")
         return r
 
     def parse(self):
@@ -93,7 +93,11 @@ class XlsxDataCollector:
                                truncate=truncate, where=where)
 
     def save_to_db(self, data=None, collection=None, truncate=False, where={}):
+        fn = '[common.parse_xlsx][save_to_db]'
         r = None
+
+        log.info(f'{fn} Saving data to db...')
+
         if not data:
             data = self.data
         if not collection:
@@ -140,3 +144,4 @@ class XlsxDataCollector:
 # v0.2.1 added support for auto_parse=true|false in constructor (default: True)
 # v0.2.2 added support for read_sheet() to return parsed dict or the df (DataFrame)
 # v0.2.3 bugfix: return var used before assigned
+# v0.2.4 optimized read_sheet() and read_file()

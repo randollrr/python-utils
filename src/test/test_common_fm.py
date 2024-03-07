@@ -3,7 +3,7 @@ import pytest
 from common.fm import FileManager
 from common.utils import log, wd
 
-_g = {}
+_g = {'pwd': None}
 
 
 @pytest.fixture
@@ -47,11 +47,13 @@ def test_cd(fm):
     # ('', '', 200),
     # (None, None, 204),
     # ('' ,'json', 200),
+    # (wd() ,'json', 200),
     # ('', 'dict', 200),
+    # (wd(), 'dict', 200),
     (wd(), 'list', 200),
 ])
 def test_crawl_dir(fm, path, ff, ret):
-    res, status = fm.crawl_dir(path=path, ret=ff)
+    res, status = fm.walk(path=path, ret=ff)
     assert res
     assert status.code == ret
 
