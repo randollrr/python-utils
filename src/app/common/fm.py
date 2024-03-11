@@ -5,7 +5,7 @@ import re
 from common.utils import deprecated, log, envar, Status
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.5'
+__version__ = '2.5.0-dev.6'
 
 
 class FileManager:
@@ -31,7 +31,7 @@ class FileManager:
         return s
 
     def crawl_dir(self, path=None, ret=None) -> tuple[list, Status]:
-        r = []
+        r = set()
         s = Status(204, 'Nothing happened.')
 
         if not ret or ret == '':
@@ -55,14 +55,18 @@ class FileManager:
                 if ret == 'list':
                     for i in t:
                         for d in i['dirs']:
-                            for f in i['files']:
-                                r += [f"{i['path']}/{d}/{f}"]
-                            r += [f"{i['path']}/{d}/"]
-                elif ret == 'json':
-                    r = json.dumps(r, indent=4)
-                else:
-                    r = t; del t  # returns dict
-        return r, s
+                            _res, _ = self.crawl_dir(f"{i['path']}/{d}", ret)
+                            for _i in _res:
+                                r.add(_i)
+                            del _res, _i
+                        for f in i['files']:
+                            r.add(f"{i['path']}/{f}")
+                # elif ret == 'json':
+                #     r = json.dumps(t, indent=4)
+                # else:
+                #     r = t  # returns dict
+                del t
+        return sorted(r), s
 
     def del_dir(self, path):
         """
@@ -71,21 +75,20 @@ class FileManager:
         :return: True or False
         """
         r = False
-        if self.exists(path):
-            try:
-                if self.pwd() == f"{path}/fm":
-                    os.rmdir(self.pwd())  # remove "/fm/" 1st before "dirstruct"
-                if self._bucket and self._bucket in path:
-                    # os.rmdir(path)
-                    # path = path.replace(self._bucket, '')
-                    log.warn(f"fm.del_dir(): Cannot delete {self._bucket} in path provided. "
-                             f"Use fm.del_bucket() instead.")
-                    return r
-                os.rmdir(path)
-                r = True
-                log.info(f"remove dir: {path}")
-            except Exception as e:
-                    log.error(f"Couldn't remove directory: {e}.")
+        try:
+            if self.pwd() == f"{path}/fm":
+                os.rmdir(self.pwd())  # remove "/fm/" 1st before "dirstruct"
+            if self._bucket and path.endswith(self._bucket):
+                # os.rmdir(path)
+                # path = path.replace(self._bucket, '')
+                log.warn(f"fm.del_dir(): Cannot delete {self._bucket} in path provided. "
+                            f"Use fm.del_bucket() instead.")
+                return r
+            os.rmdir(path)
+            r = True
+            log.info(f"removed dir: {path}")
+        except Exception as e:
+            log.error(f"Couldn't remove directory: {e}.")
         return r
 
     def del_files(self, path, files=None, dir_flag=False, fn_pattern=None):
@@ -101,11 +104,20 @@ class FileManager:
             if fn_pattern:
                 files = self.ls(path, fn_pattern=fn_pattern, fn_only=True)
 
+            if files is None:
+                path, files = '/'.join(path.split('/')[:-1]), path.split('/')[-1]
+
+            if isinstance(files, str):
+                files = [files]
+
             if isinstance(files, list):
                 for fn in files:
                     try:
-                        os.remove(os.path.join(path, fn))
-                        log.info(f"deleted: {path}/{fn}")
+                        if fn == '.keep':
+                            log.info(f"skipped: {path}/{fn}")
+                        else:
+                            os.remove(os.path.join(path, fn))
+                            log.info(f"deleted: {path}/{fn}")
                         r = True
                     except Exception as e:
                         log.error(f"Couldn't remove file: {e}")
@@ -171,6 +183,35 @@ class FileManager:
         r = False
         if isinstance(path, str) and os.path.exists(path):
             r = True
+        return r
+
+    def find(self, fn_pattern, path=None, ret='list') -> list:
+        """
+        Find file(s) based on filename.
+        :param filename: filename pattern
+        :param path: directory to scan
+        :param ret: change type of return values to receive (default: list)
+        :return: list of [filename, timestamp], list of [<dict>] or list of [<json>]
+        """
+        r = []
+        t = {}
+
+        if fn_pattern:
+            res, _ = self.walk(path=path, ret='object')
+            p, f = None, None
+            for p in res:
+                for f in p['files']:
+                    if re.match(fn_pattern, f):
+                        t.setdefault(p['path'], {'files': []})
+                        t[p['path']]['files'] += [f]
+            del res, p, f
+            if ret == 'list':
+                path, items = None, None
+                for path, items in t.items():
+                    for f in items['files']:
+                        r += [f"{path}/{f}"]
+                del path, items
+            del t
         return r
 
     def fullpath(self, path, status=False, di=None) -> object:
@@ -253,6 +294,8 @@ class FileManager:
             ret = self._output_fmt
         if path and not directory:
             directory = path
+        if not path and not directory:
+            directory = self._basedir
         return self._ts_sorted_file(
             'list', directory=directory, fn_pattern=fn_pattern, fn_only=fn_only,
             ret=ret)
@@ -412,9 +455,13 @@ class FileManager:
         return
 
     def touch(self, fn, time=None) -> None:
+        func = "[common.fm][touch]"
         path = self.fullpath(fn)
-        with open(path, 'a') as f:
-            os.utime(f.name, time)
+        try:
+            with open(path, 'a') as f:
+                os.utime(f.name, time)
+        except:
+            log.error(f"{func} : Couldn't touch file: {fn}")
         return
 
     @deprecated
@@ -501,8 +548,9 @@ class FileManager:
                     r = [x[1] for x in r]
         return r
 
-    def walk(self, path):
-        return self.crawl_dir(path)
+    def walk(self, path=None, ret=None):
+        res, _ = self.crawl_dir(path, ret)
+        return res
 
 
 fm = FileManager()
