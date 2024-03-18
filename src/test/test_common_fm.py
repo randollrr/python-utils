@@ -16,7 +16,7 @@ def fm():
     yield fm
 
     # -- teardown
-    # remove_everything(fm)
+    remove_everything(fm)
 
 # ToDo:
 # fm.cd() is not working well, add _update_paths() [port from dir_struct()]
@@ -25,14 +25,14 @@ def fm():
 # remove status as default from fm.fullpath()
 
 
-def test_remove_everything(fm):
+def remove_everything(fm):
     files = fm.walk(f"{_g['pwd']}/fm")
     print(files)
     for f in files:
-        if f.endswith('/'):
-            fm.del_dir(f)
-        else:
+        if not f.endswith('/'):
             fm.del_files(f)
+    for f in files:
+        fm.del_dir(f)
     fm.reset()
 
 
@@ -135,23 +135,22 @@ def test_exists(fm):
     assert not fm.exists(f"{fm.pwd()}/testx")
 
 
-@pytest.mark.parametrize('filename, path, ret', [
+@pytest.mark.parametrize('filename, path, ret, ret_type', [
     # (None),
     # ('result', f"{_g['pwd']}/fm", None),
-    ('result.1', f"{_g['pwd']}/fm", [f"{_g['pwd']}/fm/test1/result.1"]),
+    ('result.1', f"{_g['pwd']}/fm", [f"{_g['pwd']}/fm/test1/result.1"], 'list'),
 ])
-def test_find(fm, filename, path, ret):
+def test_find(fm, filename, path, ret, ret_type):
     fm.dir_struct(_g['pwd'], ['test1'])
-    p = fm.pwd()
     fm.touch(f"{fm.pwd()}/test1/result.1")
     fm.touch(f"{fm.pwd()}/test1/result.2")
     # fm.touch(f"{fm.pwd()}/errored/result.2")
     # fm.touch(f"{fm.pwd()}/output/result.3")
     # fm.touch(f"{fm.pwd()}/archive/result.4")
 
-    res = fm.find(filename, path, 'list')
+    res = fm.find(filename, path, ret_type)
     assert res == ret
-    fm.del_files(f"{_g['pwd']}/fm/archive", ['result.1', 'result.2'])
+    # fm.del_files(f"{fm.pwd()}/archive", ['result.1', 'result.2'])
 
 
 @pytest.mark.parametrize('req, ret', [

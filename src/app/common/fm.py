@@ -56,17 +56,19 @@ class FileManager:
                     for i in t:
                         for d in i['dirs']:
                             _res, _ = self.crawl_dir(f"{i['path']}/{d}", ret)
+                            _i = None
                             for _i in _res:
                                 r.add(_i)
                             del _res, _i
                         for f in i['files']:
                             r.add(f"{i['path']}/{f}")
+                    r = sorted(r)
                 # elif ret == 'json':
                 #     r = json.dumps(t, indent=4)
-                # else:
-                #     r = t  # returns dict
+                else:
+                    r = sorted(t, key=lambda x: x['path'])  # returns dict
                 del t
-        return sorted(r), s
+        return r, s
 
     def del_dir(self, path):
         """
@@ -197,7 +199,7 @@ class FileManager:
         t = {}
 
         if fn_pattern:
-            res, _ = self.walk(path=path, ret='object')
+            res = self.walk(path, ret='object')
             p, f = None, None
             for p in res:
                 for f in p['files']:
