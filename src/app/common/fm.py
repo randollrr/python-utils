@@ -2,7 +2,7 @@ import json
 import os
 import re
 
-from common.utils import deprecated, log, envar, Status
+from common.utils import deprecated, log, envar, Status, wd
 
 __authors__ = ['randollrr']
 __version__ = '2.5.0-dev.6'
@@ -201,13 +201,15 @@ class FileManager:
 
         log.info(f'finding for: "{fn_pattern}" in {path}')
 
+        if not fn_pattern:
+            fn_pattern = '.*'
         try:
             regex = re.compile(fn_pattern)
         except Exception as e:
             log.error(f"{fn} : Error: {e}")
             regex = None
 
-        if fn_pattern and regex:
+        if regex:
             res = self.walk(path, ret='object')
             p, f = None, None
             for p in res:
@@ -220,7 +222,7 @@ class FileManager:
                 p, items = None, None
                 for p, items in t.items():
                     for f in items['files']:
-                        r += [f"{p.replace(self.pwd(), '')}/{f}"]
+                        r += [f"{p.replace(f'{wd()}/fm', '')}/{f}"]
                 del p, items
         del t
         return r
