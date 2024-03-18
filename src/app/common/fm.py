@@ -218,12 +218,15 @@ class FileManager:
                         t.setdefault(p['path'], {'files': []})
                         t[p['path']]['files'] += [f]
             del res, p, f
-            if ret == 'list':
-                p, items = None, None
-                for p, items in t.items():
+            p, items = None, None
+            for p, items in t.items():
+                if ret == 'list':
                     for f in items['files']:
                         r += [f"{p.replace(f'{wd()}/fm', '')}/{f}"]
-                del p, items
+                else:
+                    r += [{f"{p.replace(f'{wd()}/fm', '')}" : items['files']}]
+
+            del p, items
         del t
         return r
 
