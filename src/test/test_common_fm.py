@@ -137,8 +137,9 @@ def test_exists(fm):
 
 @pytest.mark.parametrize('filename, path, ret, ret_type', [
     # (None),
+    # ('*', f"{_g['pwd']}/fm", [], None),
     # ('result', f"{_g['pwd']}/fm", None),
-    ('result.1', f"{_g['pwd']}/fm", [f"{_g['pwd']}/fm/test1/result.1"], 'list'),
+    ('result.1', f"{_g['pwd']}/fm", [f"/test1/result.1"], 'list'),
 ])
 def test_find(fm, filename, path, ret, ret_type):
     fm.dir_struct(_g['pwd'], ['test1'])

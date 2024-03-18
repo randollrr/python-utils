@@ -195,10 +195,19 @@ class FileManager:
         :param ret: change type of return values to receive (default: list)
         :return: list of [filename, timestamp], list of [<dict>] or list of [<json>]
         """
+        fn = '[common.fm][find]'
         r = []
         t = {}
 
-        if fn_pattern:
+        log.info(f'finding for: "{fn_pattern}" in {path}')
+
+        try:
+            regex = re.compile(fn_pattern)
+        except Exception as e:
+            log.error(f"{fn} : Error: {e}")
+            regex = None
+
+        if fn_pattern and regex:
             res = self.walk(path, ret='object')
             p, f = None, None
             for p in res:
@@ -208,12 +217,12 @@ class FileManager:
                         t[p['path']]['files'] += [f]
             del res, p, f
             if ret == 'list':
-                path, items = None, None
-                for path, items in t.items():
+                p, items = None, None
+                for p, items in t.items():
                     for f in items['files']:
-                        r += [f"{path}/{f}"]
-                del path, items
-            del t
+                        r += [f"{p.replace(self.pwd(), '')}/{f}"]
+                del p, items
+        del t
         return r
 
     def fullpath(self, path, status=False, di=None) -> object:
