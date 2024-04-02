@@ -6,7 +6,7 @@
 
 <br><br>
 
-## auto_utils.py
+## common.utils.py
 ---
 
 ### 1.21.0
@@ -63,7 +63,7 @@
 
 <br><br>
 
-## auto_mongo.py
+## common.mongo.py
 ---
 
 ### 1.4.0
@@ -110,7 +110,7 @@
 
 <br><br>
 
-## auto_fm.py
+## common.fm
 ---
 
 ### 2.5.0
@@ -118,7 +118,7 @@
 - added fm.fullpath, fm.cd(<relative-path>), fm.pwd()
 - add support to fm.ls() to return file/dir object w/ better details
 - add support to create/delete subfolders
-- added auto_create feature to dir_struct() and set_bucket()
+- added common.create feature to dir_struct() and set_bucket()
 
 ### 2.4.2
 - remove conditional general path update
