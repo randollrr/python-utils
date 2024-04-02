@@ -5,7 +5,7 @@ import re
 from common.utils import deprecated, log, envar, Status, wd
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.6'
+__version__ = '2.5.0-dev.7'
 
 
 class FileManager:
@@ -113,13 +113,13 @@ class FileManager:
                 files = [files]
 
             if isinstance(files, list):
-                for fn in files:
+                for filename in files:
                     try:
-                        if fn == '.keep':
-                            log.info(f"skipped: {path}/{fn}")
+                        if filename == '.keep':
+                            log.info(f"skipped: {path}/{filename}")
                         else:
-                            os.remove(os.path.join(path, fn))
-                            log.info(f"deleted: {path}/{fn}")
+                            os.remove(os.path.join(path, filename))
+                            log.info(f"deleted: {path}/{filename}")
                         r = True
                     except Exception as e:
                         log.error(f"Couldn't remove file: {e}")
@@ -175,7 +175,7 @@ class FileManager:
                         log.info(f"  auto_create is off, did not create: {n_path}")
                         return r
                 else:
-                    log.info(f"already exists: {n_path}")
+                    log.debug(f"already exists: {n_path}")
             r = True
         except Exception as e:
             log.error(f"Couldn't setup directory structure.\n{e}")
@@ -199,7 +199,7 @@ class FileManager:
         r = []
         t = {}
 
-        log.info(f'finding for: "{fn_pattern}" in {path}')
+        log.info(f'{fn} : finding for: "{fn_pattern}" in {path}')
 
         if not fn_pattern:
             fn_pattern = '.*'
@@ -209,7 +209,7 @@ class FileManager:
             log.error(f"{fn} : Error: {e}")
             regex = None
 
-        if regex:
+        if regex and path:
             res = self.walk(path, ret='object')
             p, f = None, None
             for p in res:
@@ -220,11 +220,13 @@ class FileManager:
             del res, p, f
             p, items = None, None
             for p, items in t.items():
-                if ret == 'list':
+                if ret in ['list', 'fullpaths']:
                     for f in items['files']:
-                        r += [f"{p.replace(f'{wd()}/fm', '')}/{f}"]
+                        if not ret == 'fullpaths':
+                            p = p.replace(f'{wd()}/fm/', '')
+                        r += [f"{p}/{f}"]
                 else:
-                    r += [{f"{p.replace(f'{wd()}/fm', '')}" : items['files']}]
+                    r += [{f"{p.replace(f'{wd()}/fm/', '')}" : items['files']}]
 
             del p, items
         del t
@@ -317,7 +319,8 @@ class FileManager:
             ret=ret)
 
     def mkdirs(self, path) -> Status:
-        s = Status(204, 'Nothing happened.')
+        fn = '[common.fm][mkdirs]'
+        s = Status(204, 'Nothing happened. Invalid path provided.')
         path = self.fullpath(path)
         if path:
             try:
@@ -327,7 +330,9 @@ class FileManager:
             except Exception as e:
                 s.code = 500
                 s.message = f"fm.mkdirs() : Error ocurred. : {e}"
-                log.error(s.message)
+                log.error(f"{fn} : {s.message}")
+        else:
+            log.error(f"{fn} : {s.message}")
         return s
 
     def move(self, fn, src, dst):
