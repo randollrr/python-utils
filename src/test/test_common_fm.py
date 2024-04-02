@@ -135,13 +135,14 @@ def test_exists(fm):
     assert not fm.exists(f"{fm.pwd()}/testx")
 
 
-@pytest.mark.parametrize('filename, path, ret, ret_type', [
-    # (None),
-    # ('*', f"{_g['pwd']}/fm", [], None),
-    # ('result', f"{_g['pwd']}/fm", None),
-    ('result.1', f"{_g['pwd']}/fm", [f"/test1/result.1"], 'list'),
+@pytest.mark.parametrize('filename, path, ret_type, ret_value', [
+    (None, None, None, []),
+    ('*', f"{_g['pwd']}/fm", None, []),
+    ('result', f"{_g['pwd']}/fm", None, [{'test1': ['result.2', 'result.1']}]),
+    ('result.1', f"{_g['pwd']}/fm", 'list', [f"test1/result.1"]),
+    ('result.1', f"{_g['pwd']}/fm", 'fullpaths', [f"{_g['pwd']}/fm/test1/result.1"]),
 ])
-def test_find(fm, filename, path, ret, ret_type):
+def test_find(fm, filename, path, ret_type, ret_value):
     fm.dir_struct(_g['pwd'], ['test1'])
     fm.touch(f"{fm.pwd()}/test1/result.1")
     fm.touch(f"{fm.pwd()}/test1/result.2")
@@ -150,7 +151,7 @@ def test_find(fm, filename, path, ret, ret_type):
     # fm.touch(f"{fm.pwd()}/archive/result.4")
 
     res = fm.find(filename, path, ret_type)
-    assert res == ret
+    assert res == ret_value
     # fm.del_files(f"{fm.pwd()}/archive", ['result.1', 'result.2'])
 
 
