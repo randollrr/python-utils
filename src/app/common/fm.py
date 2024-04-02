@@ -187,7 +187,7 @@ class FileManager:
             r = True
         return r
 
-    def find(self, fn_pattern, path=None, ret='list') -> list:
+    def find(self, fn_pattern=None, path=None, ret='list') -> list:
         """
         Find file(s) based on filename.
         :param filename: filename pattern
