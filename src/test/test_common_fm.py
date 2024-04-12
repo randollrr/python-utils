@@ -13,6 +13,9 @@ def fm():
     """
     # -- setup
     fm = FileManager()
+    fm.dir_struct(_g['pwd'], ['test1'])
+    fm.touch(f"{fm.pwd()}/test1/result.1")
+    fm.touch(f"{fm.pwd()}/test1/result.2")
     yield fm
 
     # -- teardown
@@ -143,9 +146,9 @@ def test_exists(fm):
     ('result.1', f"{_g['pwd']}/fm", 'fullpaths', [f"{_g['pwd']}/fm/test1/result.1"]),
 ])
 def test_find(fm, filename, path, ret_type, ret_value):
-    fm.dir_struct(_g['pwd'], ['test1'])
-    fm.touch(f"{fm.pwd()}/test1/result.1")
-    fm.touch(f"{fm.pwd()}/test1/result.2")
+    # fm.dir_struct(_g['pwd'], ['test1'])
+    # fm.touch(f"{fm.pwd()}/test1/result.1")
+    # fm.touch(f"{fm.pwd()}/test1/result.2")
     # fm.touch(f"{fm.pwd()}/errored/result.2")
     # fm.touch(f"{fm.pwd()}/output/result.3")
     # fm.touch(f"{fm.pwd()}/archive/result.4")
@@ -252,21 +255,28 @@ def test_mkdirs(fm, req, ret):
 
 def test_move(fm):
     fm.dir_struct(_g['pwd'], ['test1', 'test2'])
-    res = fm.move('result.3',
-                  f"{_g['pwd']}/fm/test1",
-                  f"{_g['pwd']}/fm/test2")
+    fm.touch(f"{fm.pwd()}/test1/result.3")
+    fm.touch(f"{fm.pwd()}/test2/result.3")
+    res = fm.move('result.1',
+                  f"{fm.pwd()}/test1",
+                  f"{fm.pwd()}/test2")
     assert res
-
-    files_list = fm.ls(f"{_g['pwd']}/fm/test2", fn_only=True)
-    assert 'result.3' in files_list
-
+    res = fm.move('result.3',
+                  f"{fm.pwd()}/test1",
+                  f"{fm.pwd()}/test2",
+                  override=True)
+    assert res and not fm.exists(f"{fm.pwd()}/test2/result_1.3")
+    fm.touch(f"{fm.pwd()}/test1/result.3")
+    res = fm.move('result.3',
+                  f"{fm.pwd()}/test1",
+                  f"{fm.pwd()}/test2")
+    assert res and fm.exists(f"{fm.pwd()}/test2/result_1.3")
+    ...
 
 def test_oldest(fm):
     fm.dir_struct(_g['pwd'], ['test1'])
-
     res = fm.oldest(f"{_g['pwd']}/fm/test1")
     assert  len(res) == 2
-
     res = fm.oldest(f"{_g['pwd']}/fm/test1", fn_only=True)
     assert  res == 'result.1'
 

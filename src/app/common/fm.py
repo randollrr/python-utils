@@ -5,7 +5,7 @@ import re
 from common.utils import deprecated, log, envar, Status, wd
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.7'
+__version__ = '2.5.0-dev.8'
 
 
 class FileManager:
@@ -335,7 +335,7 @@ class FileManager:
             log.error(f"{fn} : {s.message}")
         return s
 
-    def move(self, fn, src, dst):
+    def move(self, fn, src, dst, override=False):
         """
         Move file.
         :param fn: filename
@@ -360,7 +360,7 @@ class FileManager:
         def do_move(fnum=0):
             _r = False
             new_fn = newfilename(fnum)
-            if not self.exists(f"{dst}/{new_fn}"):
+            if override or not self.exists(f"{dst}/{new_fn}"):
                 if self.exists(f"{src}/{fn}"):
                     os.rename(f"{src}/{fn}", f"{dst}/{new_fn}")
                     log.info(f"moved: [{src}/{fn}] to [{dst}/{new_fn}]")

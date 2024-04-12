@@ -119,6 +119,7 @@
 - add support to fm.ls() to return file/dir object w/ better details
 - add support to create/delete subfolders
 - added common.create feature to dir_struct() and set_bucket()
+- added override=True to fm.move() to not add +1 to filename if exists at destination
 
 ### 2.4.2
 - remove conditional general path update
