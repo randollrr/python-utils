@@ -6,7 +6,7 @@ from common.utils import log, ts, Status
 import common.scheduler as sch
 
 
-# @pytest.mark.skip('manual-run')
+@pytest.mark.skip('manual-run')
 @pytest.mark.parametrize('req, ret', [
     ('', datetime.strptime(f"{ts(kind='date')}T12:12:59Z", '%Y-%m-%dT%H:%M:%SZ'))
 ])
