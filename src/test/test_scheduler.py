@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import pytest
-from common.utils import log, ts
+from common.utils import log, ts, Status
 
 import common.scheduler as sch
 
@@ -15,8 +15,10 @@ def test_get_next_event(req, ret):
     assert res == ret
 
 
-
-def test_another_func(req, ret):
-    res = ...
-    assert res == ret
+@pytest.mark.parametrize('job, params, ret', [
+    ('cron.job_example', {'--say': 'hello world'}, Status(200, 'job_example ran successfully.'))
+])
+def test_run_job(job, params, ret):
+    res = sch.run_job(job, params)
+    assert res.code == ret.code
 

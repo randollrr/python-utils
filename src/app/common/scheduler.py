@@ -3,7 +3,7 @@
 # -- built-ins
 from datetime import datetime, timedelta
 import importlib
-import multiprocessing
+from multiprocessing import Process
 from sys import argv
 import threading
 
@@ -11,9 +11,9 @@ import threading
 from croniter import croniter
 
 # -- project-libs
-from common.utils import config, log
+from common.utils import config, log, Status
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 default_timer = 60  # in second
 
@@ -71,7 +71,7 @@ def get_list():
     return r
 
 
-def isexecutable(dt: datetime):
+def isexecutable(dt:datetime):
     """
     Validate event is between [now-default_timer-1]  and [now].
     """
@@ -87,27 +87,48 @@ def isexecutable(dt: datetime):
     return r
 
 
-def run_job(job_name: str=None) -> None:
+def run_job(job_name:str=None, params:dict=None) -> None:
     """
     Run jobs.
+    :param job_name: name of the job to run
+    :param params: optional parameters for the job e.g. {key: value, ...}
     """
+    fn = '[scheduler.run_job]'
+    s = Status(204, f"No job ran.")
     jobs = []
+    argv_ = []
 
+    log.info(f'{fn} : launching {job_name if job_name else "jobs"}...')
+
+    # -- validate parameters
     if job_name:
         jobs = [job_name]
     if not jobs:
-        jobs = get_list()
+        jobs = get_list()  # ToDo: change get_list() to return (jobs, params)
+    if params and isinstance(params, dict):
+        log.debug(f"{fn} : parameters: {params}")
+        for k, v in params.items():
+            argv_ += [(k, v)]
 
+    # -- run jobs
     for j in jobs:
         module = get_mod(j)
         try:
-            log.info(f"scheduler: running jobs... [{j}][{config['crontab'][j]}]")
-            process = multiprocessing.Process(target=module.run)
+            # log.info(f"scheduler: running jobs... [{j}][{config['crontab'][j]}]")
+            process = Process(target=module.run, args=argv_)
             process.start()
-        except:
-            log.error(f"issues encountered while running {j}.")
+            process.join()
+            s.code = 200
+            s.message = f'Job "{j}" ran successfully.'
+            log.info(f"{fn} : {s.message}")
+        except Exception as e:
+            s.code = 500
+            s.message = f'Error encountered while running "{j}" -- ' \
+                        f'check if exists or the logs. \n{e}'
+            log.error(f"{fn} : {s.message}")
         finally:
             del module
+    return s
 
 
 def wakeup() -> None:
