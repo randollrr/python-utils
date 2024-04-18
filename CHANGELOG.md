@@ -6,7 +6,7 @@
 
 <br><br>
 
-## common.utils.py
+## common.utils
 ---
 
 ### 1.21.0
@@ -63,7 +63,7 @@
 
 <br><br>
 
-## common.mongo.py
+## common.mongo
 ---
 
 ### 1.4.0
@@ -156,3 +156,18 @@
 - optimize latest() --> ts_sorted_file()
 - add oldest()
 - add delete() --> delete_files()
+
+
+<br><br>
+
+## common.scheduler
+---
+
+### 1.1.0
+- add support foro parameters to scheduler.run_job()
+
+### 1.0.1
+...
+
+### 1.0.0
+- initial implementation
