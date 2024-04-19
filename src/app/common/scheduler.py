@@ -87,7 +87,7 @@ def isexecutable(dt:datetime):
     return r
 
 
-def run_job(job_name:str=None, params:dict=None) -> None:
+def run_job(job_name:str=None, params:dict=None) -> Status:
     """
     Run jobs.
     :param job_name: name of the job to run
@@ -114,7 +114,6 @@ def run_job(job_name:str=None, params:dict=None) -> None:
     for j in jobs:
         module = get_mod(j)
         try:
-            # log.info(f"scheduler: running jobs... [{j}][{config['crontab'][j]}]")
             process = Process(target=module.run, args=argv_)
             process.start()
             process.join()
