@@ -3,6 +3,17 @@ service:
   app-name: app
   log-level: DEBUG
   log-stdout: true
+crontab:
+  cron.job_sample:
+    schedule: '*/5 * * * *'
+    params:
+      override: true
+  cron.job_janitor: '* * * * *'
+  cron.job_example:
+    schedule: '* * * * *'
+    status: None
+    params:
+      say: 'Hello World'
 external-api:
   base-url: https://api.somewhere.com
   keys: ((env:API_KEYS))
