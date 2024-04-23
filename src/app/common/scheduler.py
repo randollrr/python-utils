@@ -3,7 +3,6 @@
 # -- built-ins
 from datetime import datetime, timedelta
 import importlib
-import json
 from multiprocessing import Process
 from sys import argv
 import threading
@@ -50,7 +49,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
         try:
             process = Process(
                 target=module.run,
-                args=(json.dumps(_argv[j]),) if _argv.get(j) else None)
+                args=(_argv[j],) if _argv.get(j) else None)
             process.start()
             s.code = 200
             s.message = f'{fn} : Job "{j}" was successfully launched.'
