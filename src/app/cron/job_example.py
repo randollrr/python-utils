@@ -21,7 +21,9 @@ def run(params:dict=None) -> str:
     if res:
         s.code = 200
         s.message = f"job_example ran successfully."
-    return s.to_str()
+    r = s.to_str()
+    log.debug(f"{fn} : return values: {r}")
+    return r
 
 
 if __name__ == "__main__":
