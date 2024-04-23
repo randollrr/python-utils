@@ -3,6 +3,7 @@
 # -- built-ins
 from datetime import datetime, timedelta
 import importlib
+import json
 from multiprocessing import Process
 from sys import argv
 import threading
@@ -18,19 +19,30 @@ __version__ = '1.1.0'
 default_timer = 60  # in second
 
 
-def get_next_event(timer_str) -> datetime:
+def get_list() -> tuple[list, dict]:
     """
-    Returns next event time (object)
-    :param time_str: cron formatted schedule string (https://en.wikipedia.org/wiki/Cron)
-    :return: datetime
+    Return runnable jobs for this period.
+    :return: list of jobs
+    :return: list of parameters for each job
     """
-    r = None
-    try:
-        base = datetime.utcnow()-timedelta(seconds=default_timer-1)
-        r = croniter(timer_str, base).get_next(datetime)
-    except Exception as e:
-        log.error(f"error found with cron-formatted timer: {timer_str}\n{e}")
-    return r
+    jobs = []
+    params = []
+
+    config.read()
+    crons = config['crontab']  # if config['crontab'] else []
+    for j, t in crons.items():
+        v2_plus = True if isinstance(t, dict) else False
+        # -- version 1.x.x processing
+        if not v2_plus:
+            if isexecutable(get_next_event(t)):
+                jobs += [j]
+        # -- version 2.x.x processing
+        elif v2_plus and isexecutable(get_next_event(t.get('schedule'))):
+            jobs += [j]
+            params += [{j: t.get('params')}]
+
+    log.debug(f"updated list of jobs: {jobs}")
+    return jobs, params
 
 
 def get_mod(job_name):
@@ -56,18 +68,18 @@ def get_mod(job_name):
     return r
 
 
-def get_list():
+def get_next_event(timer_str) -> datetime:
     """
-    Return runnable jobs for this period.
+    Returns next event time (object)
+    :param time_str: cron formatted schedule string (https://en.wikipedia.org/wiki/Cron)
+    :return: datetime
     """
-    r = []
-    config.read()
-    crons = config['crontab']
-    if crons:
-        for j, t in crons.items():
-            if isexecutable(get_next_event(t)):
-                r += [j]
-    log.debug(f"updated list of jobs: {r}")
+    r = None
+    try:
+        base = datetime.utcnow()-timedelta(seconds=default_timer-1)
+        r = croniter(timer_str, base).get_next(datetime)
+    except Exception as e:
+        log.error(f"error found with cron-formatted timer: {timer_str}\n{e}")
     return r
 
 
@@ -87,7 +99,7 @@ def isexecutable(dt:datetime):
     return r
 
 
-def run_job(job_name:str=None, params:dict=None) -> Status:
+def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     """
     Run jobs.
     :param job_name: name of the job to run
@@ -95,39 +107,44 @@ def run_job(job_name:str=None, params:dict=None) -> Status:
     """
     fn = '[scheduler.run_job]'
     s = Status(204, f"No job ran.")
+    statuses = []
     jobs = []
-    argv_ = []
+    _argv = {}
 
     log.info(f'{fn} : launching {job_name if job_name else "jobs"}...')
 
     # -- validate parameters
-    if job_name:
+    if isinstance(job_name, str):
         jobs = [job_name]
     if not jobs:
-        jobs = get_list()  # ToDo: change get_list() to return (jobs, params)
+        jobs, params = get_list()
     if params and isinstance(params, dict):
         log.debug(f"{fn} : parameters: {params}")
         for k, v in params.items():
-            argv_ += [(k, v)]
+            _argv.update({k: (v,)})
+        del params
 
     # -- run jobs
     for j in jobs:
         module = get_mod(j)
         try:
-            process = Process(target=module.run, args=argv_)
+            process = Process(
+                target=module.run,
+                args=(json.dumps(_argv[j]),) if _argv.get(j) else None)
             process.start()
-            process.join()
             s.code = 200
-            s.message = f'Job "{j}" ran successfully.'
+            s.message = f'Job "{j}" was successfully launched.'
+            statuses += [s]
             log.info(f"{fn} : {s.message}")
         except Exception as e:
             s.code = 500
             s.message = f'Error encountered while running "{j}" -- ' \
                         f'check if exists or the logs. \n{e}'
+            statuses += [s]
             log.error(f"{fn} : {s.message}")
         finally:
             del module
-    return s
+    return statuses
 
 
 def wakeup() -> None:
