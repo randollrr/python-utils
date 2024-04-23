@@ -49,6 +49,7 @@ def get_mod(job_name):
     """
     Try to load module with the run() function.
     """
+    fn = '[common.scheduler][get_mod]'
     r = None
 
     if not job_name:
@@ -59,12 +60,14 @@ def get_mod(job_name):
             del r
             r = None
             log.error(
-                f"{job_name} cannot be executed. "
+                f'{fn} : "{job_name}" cannot be executed. '
                 f"Make sure there is a run() function in the module.")
         else:
-            log.debug(f"module {job_name} is now loaded.")
-    except:
-        log.error(f"module {job_name} could not be found. Check the path.")
+            log.debug(f'module "{job_name}" is now loaded.')
+    except Exception as e:
+        log.error(
+            f'{fn} : module "{job_name}" could not be found. Check the path.'
+            f"\n{e}")
     return r
 
 
@@ -74,12 +77,14 @@ def get_next_event(timer_str) -> datetime:
     :param time_str: cron formatted schedule string (https://en.wikipedia.org/wiki/Cron)
     :return: datetime
     """
+    fn = '[common.scheduler][get_next_event]'
     r = None
     try:
         base = datetime.utcnow()-timedelta(seconds=default_timer-1)
         r = croniter(timer_str, base).get_next(datetime)
     except Exception as e:
-        log.error(f"error found with cron-formatted timer: {timer_str}\n{e}")
+        log.error(
+            f"{fn} : error found with cron-formatted timer: {timer_str}\n{e}")
     return r
 
 
@@ -87,13 +92,14 @@ def isexecutable(dt:datetime):
     """
     Validate event is between [now-default_timer-1]  and [now].
     """
+    fn = '[common.scheduler][isexecutable]'
     r = False
     try:
         now = datetime.utcnow()
         st = now-timedelta(seconds=default_timer-1)
         if dt > st and dt <= now:
             r = True
-        log.debug(f"? [{st}] > [{dt}] < [{now}]")
+        log.debug(f"{fn} : ? [{st}] > [{dt}] < [{now}]")
     except:
         pass
     return r
@@ -105,7 +111,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     :param job_name: name of the job to run
     :param params: optional parameters for the job e.g. {key: value, ...}
     """
-    fn = '[scheduler.run_job]'
+    fn = '[common.scheduler][run_job]'
     s = Status(204, f"No job ran.")
     statuses = []
     jobs = []
@@ -133,15 +139,15 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
                 args=(json.dumps(_argv[j]),) if _argv.get(j) else None)
             process.start()
             s.code = 200
-            s.message = f'Job "{j}" was successfully launched.'
+            s.message = f'{fn} : Job "{j}" was successfully launched.'
             statuses += [s]
             log.info(f"{fn} : {s.message}")
         except Exception as e:
             s.code = 500
-            s.message = f'Error encountered while running "{j}" -- ' \
+            s.message = f'{fn} : Error encountered while running "{j}" -- ' \
                         f'check if exists or the logs. \n{e}'
             statuses += [s]
-            log.error(f"{fn} : {s.message}")
+            log.error(f"{s.message}")
         finally:
             del module
     return statuses
@@ -167,7 +173,6 @@ if __name__ == "__main__":
     if '--help' in argv:
         print(
             '\nUsage: ./scheduler.py [OPTION] \n'
-            '  -n        refresh rate interval in seconds\n'
-        )
+            '  -n        refresh rate interval in seconds\n')
         exit()
     wakeup()
