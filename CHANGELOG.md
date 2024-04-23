@@ -164,7 +164,9 @@
 ---
 
 ### 1.1.0
-- add support foro parameters to scheduler.run_job()
+- add support for parameters to scheduler.run_job([params={}])
+- add support for new crontab schema
+- add support for return status (JSON) from running jobs
 
 ### 1.0.1
 ...
