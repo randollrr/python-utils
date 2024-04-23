@@ -1,11 +1,12 @@
 from common.utils import log, Status
 
 
-def run(params:dict=None) -> tuple[dict, Status]:
+def run(params:dict=None) -> str[Status]:
     """
     Running job.
-    :param params: list of tuples with key-value pairs. e.g. [('key', 'value'), ...]
-    :return: tuple with dictionary and status. e.g. ({'key': 'value'}, Status(200, 'message'))
+    :param params: list of tuples with key-value pairs as JSON.
+                   e.g. [{"<key>": "<value>", "<key>": "<value>"}]
+    :return: Status(<200>, '<message>')
     """
     fn = '[cron.job_example.run]'
     s = Status(204, f"No data.")
@@ -20,7 +21,7 @@ def run(params:dict=None) -> tuple[dict, Status]:
     if res:
         s.code = 200
         s.message = f"job_example ran successfully."
-    return s
+    return s.to_str()
 
 
 if __name__ == "__main__":
