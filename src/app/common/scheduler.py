@@ -19,6 +19,54 @@ __version__ = '1.1.0'
 default_timer = 60  # in second
 
 
+def run_job(job_name:str=None, params:dict=None) -> list[Status]:
+    """
+    Run jobs.
+    :param job_name: name of the job to run
+    :param params: optional parameters for the job e.g. {key: value, ...}
+    """
+    fn = '[common.scheduler][run_job]'
+    s = Status(204, f"No job ran.")
+    statuses = []
+    jobs = []
+    _argv = {}
+
+    log.info(f'{fn} : launching {job_name if job_name else "jobs"}...')
+
+    # -- validate parameters
+    if isinstance(job_name, str):
+        jobs = [job_name]
+    if not jobs:
+        jobs, params = get_list()
+    if params and isinstance(params, dict):
+        log.debug(f"{fn} : parameters: {params}")
+        for k, v in params.items():
+            _argv.update({k: (v,)})
+        del params
+
+    # -- run jobs
+    for j in jobs:
+        module = get_mod(j)
+        try:
+            process = Process(
+                target=module.run,
+                args=(json.dumps(_argv[j]),) if _argv.get(j) else None)
+            process.start()
+            s.code = 200
+            s.message = f'{fn} : Job "{j}" was successfully launched.'
+            statuses += [s]
+            log.info(f"{fn} : {s.message}")
+        except Exception as e:
+            s.code = 500
+            s.message = f'{fn} : Error encountered while running "{j}" -- ' \
+                        f'check if exists or the logs. \n{e}'
+            statuses += [s]
+            log.error(f"{s.message}")
+        finally:
+            del module
+    return statuses
+
+
 def get_list() -> tuple[list, dict]:
     """
     Return runnable jobs for this period.
@@ -103,54 +151,6 @@ def isexecutable(dt:datetime):
     except:
         pass
     return r
-
-
-def run_job(job_name:str=None, params:dict=None) -> list[Status]:
-    """
-    Run jobs.
-    :param job_name: name of the job to run
-    :param params: optional parameters for the job e.g. {key: value, ...}
-    """
-    fn = '[common.scheduler][run_job]'
-    s = Status(204, f"No job ran.")
-    statuses = []
-    jobs = []
-    _argv = {}
-
-    log.info(f'{fn} : launching {job_name if job_name else "jobs"}...')
-
-    # -- validate parameters
-    if isinstance(job_name, str):
-        jobs = [job_name]
-    if not jobs:
-        jobs, params = get_list()
-    if params and isinstance(params, dict):
-        log.debug(f"{fn} : parameters: {params}")
-        for k, v in params.items():
-            _argv.update({k: (v,)})
-        del params
-
-    # -- run jobs
-    for j in jobs:
-        module = get_mod(j)
-        try:
-            process = Process(
-                target=module.run,
-                args=(json.dumps(_argv[j]),) if _argv.get(j) else None)
-            process.start()
-            s.code = 200
-            s.message = f'{fn} : Job "{j}" was successfully launched.'
-            statuses += [s]
-            log.info(f"{fn} : {s.message}")
-        except Exception as e:
-            s.code = 500
-            s.message = f'{fn} : Error encountered while running "{j}" -- ' \
-                        f'check if exists or the logs. \n{e}'
-            statuses += [s]
-            log.error(f"{s.message}")
-        finally:
-            del module
-    return statuses
 
 
 def wakeup() -> None:
