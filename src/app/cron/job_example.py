@@ -29,12 +29,12 @@ def run(params:list[tuple]=None) -> str:
     return r
 
 
-def param_unpack(params):
+def param_unpack(params) -> dict:
     """
     Parameter unpacking routine
     :param params: list of tuples with key-value pairs.
                 e.g. ({"<key>": "<value>", "<key>": "<value>"})
-    :return:
+    :return: extracted values
     """
     fn = '[cron.job_example][param_unpack]'
     r = {}
