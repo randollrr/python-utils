@@ -1,14 +1,14 @@
 from common.utils import log, Status
 
 
-def run(params:dict=None) -> str[Status]:
+def run(params:dict=None) -> str:
     """
     Running job.
     :param params: list of tuples with key-value pairs as JSON.
                    e.g. [{"<key>": "<value>", "<key>": "<value>"}]
-    :return: Status(<200>, '<message>')
+    :return: Status(<200>, '<message>') json string
     """
-    fn = '[cron.job_example.run]'
+    fn = '[cron.job_example][run]'
     s = Status(204, f"No data.")
 
     log.info(f"{fn} running...")
