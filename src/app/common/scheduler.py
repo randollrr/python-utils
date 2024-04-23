@@ -111,7 +111,7 @@ def get_mod(job_name):
                 f'{fn} : "{job_name}" cannot be executed. '
                 f"Make sure there is a run() function in the module.")
         else:
-            log.debug(f'module "{job_name}" is now loaded.')
+            log.debug(f'{fn} : module "{job_name}" is now loaded.')
     except Exception as e:
         log.error(
             f'{fn} : module "{job_name}" could not be found. Check the path.'
