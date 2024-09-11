@@ -6,17 +6,18 @@ import pandas as pd
 from common.utils import deprecated, log
 from common.mongo import dao
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 
 class XlsxDataCollector:
 
-    def __init__(self, filename, sheetname=None, transformer=None, auto_parse=True):
+    def __init__(self, filename, sheetname=None, transformer=None, skiprows=None, auto_parse=True):
         self.data = []
         self.filename = filename
         self.xls_file = None
         self.sheetname = sheetname
         self.transformer = transformer if isinstance(transformer, dict) else None
+        self.skiprows = skiprows
 
         # -- read file and parse
         if auto_parse:
@@ -67,6 +68,7 @@ class XlsxDataCollector:
                 self.xls_file,
                 sheet_name=self.sheetname,
                 usecols=list_cols,
+                skiprows=None if self.skiprows is None else self.skiprows,
                 header=headers)
             if sort_by:
                 df = df.sort_values(by=sort_by)
@@ -151,3 +153,4 @@ class XlsxDataCollector:
 # v0.2.3 bugfix: return var used before assigned
 # v0.2.4 optimized read_sheet() and read_file()
 # v0.3.0 added support to switch between openpyxl (.xlsx) and xlrd (.xls) engines
+# v0.3.1 added support for skiprows in read_sheet()
