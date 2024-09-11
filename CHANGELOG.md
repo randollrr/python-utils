@@ -3,11 +3,11 @@
 - common.mongo
 - common.fm
 
-
 <br><br>
 
+
 ## auto_utils.py
----
+
 
 ### 1.21.0
 - add change_to to config.file_type()
@@ -60,11 +60,11 @@
 - add `status.from_dict(status)`
 - add `status.from_json(status)`
 
-
 <br><br>
 
+
 ## auto_mongo.py
----
+
 
 ### 1.4.0
 - add timestamp updated_dt by default (param: add_ts=True)
@@ -107,11 +107,11 @@
 ### [backlog]
 - add aggregation to MongoCRUD.read()
 
-
 <br><br>
 
+
 ## auto_fm.py
----
+
 
 ### 2.5.0
 - updated strings to f-string
@@ -155,3 +155,5 @@
 - optimize latest() --> ts_sorted_file()
 - add oldest()
 - add delete() --> delete_files()
+
+<br/><br/>
