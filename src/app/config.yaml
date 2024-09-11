@@ -5,7 +5,8 @@ service:
   log-stdout: true
 crontab:
   cron.job_sample:
-    schedule: '*/5 * * * *'
+    # schedule: '*/5 * * * *'
+    schedule: '* * * * *'
     params:
       override: true
   cron.job_janitor: '* * * * *'
@@ -14,6 +15,7 @@ crontab:
     status: None
     params:
       say: 'Hello World'
+      name: John Doe
 external-api:
   base-url: https://api.somewhere.com
   keys: ((env:API_KEYS))
@@ -23,6 +25,7 @@ mongo.dev:
   authenticationDatabase: ''
   collection: test
   database: test_db
+  # host: 172.29.176.1
   host: host.docker.internal
   password: null
   port: 27017
