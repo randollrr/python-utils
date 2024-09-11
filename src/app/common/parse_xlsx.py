@@ -6,7 +6,7 @@ import pandas as pd
 from common.utils import deprecated, log
 from common.mongo import dao
 
-__version__ = '0.2.4'
+__version__ = '0.3.0'
 
 
 class XlsxDataCollector:
@@ -37,8 +37,13 @@ class XlsxDataCollector:
 
         if filename:
             self.filename = filename
+
+        xls_ngn = 'openpyxl'
+        if str(self.filename).endswith('.xls'):
+            xls_ngn = 'xlrd'
+
         try:
-            self.xls_file = pd.ExcelFile(self.filename)
+            self.xls_file = pd.ExcelFile(self.filename, engine=xls_ngn)
         except Exception as e:
             log.error(f"{fn} : File type error, Excel (xlsx) file is expected. \n{e}")
 
@@ -145,3 +150,4 @@ class XlsxDataCollector:
 # v0.2.2 added support for read_sheet() to return parsed dict or the df (DataFrame)
 # v0.2.3 bugfix: return var used before assigned
 # v0.2.4 optimized read_sheet() and read_file()
+# v0.3.0 added support to switch between openpyxl (.xlsx) and xlrd (.xls) engines
