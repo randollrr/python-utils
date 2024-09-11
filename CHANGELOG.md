@@ -3,11 +3,11 @@
 - common.mongo
 - common.fm
 
-
 <br><br>
 
-## common.utils
----
+
+## auto_utils.py
+
 
 ### 1.21.0
 - add change_to to config.file_type()
@@ -60,10 +60,10 @@
 - add `status.from_dict(status)`
 - add `status.from_json(status)`
 
-
 <br><br>
 
-## common.mongo
+
+## auto_mongo.py
 ---
 
 ### 1.4.0
@@ -107,10 +107,10 @@
 ### [backlog]
 - add aggregation to MongoCRUD.read()
 
-
 <br><br>
 
-## common.fm
+
+## auto_fm.py
 ---
 
 ### 2.5.0
@@ -156,20 +156,3 @@
 - optimize latest() --> ts_sorted_file()
 - add oldest()
 - add delete() --> delete_files()
-
-
-<br><br>
-
-## common.scheduler
----
-
-### 1.1.0
-- add support for parameters to scheduler.run_job([params={}])
-- add support for new crontab schema
-- add support for return status (JSON) from running jobs
-
-### 1.0.1
-...
-
-### 1.0.0
-- initial implementation
