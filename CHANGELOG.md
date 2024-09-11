@@ -156,3 +156,20 @@
 - optimize latest() --> ts_sorted_file()
 - add oldest()
 - add delete() --> delete_files()
+
+
+<br><br>
+
+## common.scheduler
+
+
+### 1.1.0
+- add support for parameters to scheduler.run_job([params={}])
+- add support for new crontab schema
+- add support for return status (JSON) from running jobs
+
+### 1.0.1
+...
+
+### 1.0.0
+- initial implementation
