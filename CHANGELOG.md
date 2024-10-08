@@ -8,6 +8,8 @@
 
 ## common.utils.py
 
+### 1.22.0
+- add do_get() and _do_request()
 
 ### 1.21.0
 - add change_to to config.file_type()
