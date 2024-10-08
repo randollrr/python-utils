@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import json
 import logging
 import os
+import requests
 import warnings
 from logging.handlers import RotatingFileHandler
 
@@ -19,7 +20,7 @@ except ImportError:
     yaml = None
 
 __authors__ = ['randollrr', 'msmith8']
-__version__ = '1.21.0'
+__version__ = '1.22.0'
 
 g = {}
 UTILS_PART_OF_COMMON = True
@@ -311,6 +312,37 @@ def envar_in(txt) -> str:
             r = txt.replace(v, t)
         del s, e, v, t, txt
     return r
+
+
+def do_get(url, verify_https=False):
+    return _do_request('GET', url, verify_https)
+
+
+def _do_request(kind, url, verify_https=False) -> tuple[object, Status]:
+    fn = '[common.utils][_do_get]'
+    r = None
+    s = Status(204, 'Nothing happened.')
+    http_text = None
+
+    log.info(f"{fn} : {url}")
+
+    if kind == 'GET':
+        res = requests.get(url, verify=verify_https)
+        if res.status_code == 200:
+            http_text = res.text
+            r = res.json()
+            if not r:
+                s.code = 404
+                s.message = 'No Data.'
+            else:
+                s.code = 200
+                s.message = 'OK.'
+    else:
+        log.error(f"{fn} : returns {http_text}")
+    del res
+
+    log.debug(f"{fn} : returns {r}")
+    return r, s
 
 
 def next_add(text):
