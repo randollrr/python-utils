@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 
 from copy import deepcopy
 import os
@@ -276,8 +276,14 @@ class MongoCRUD:
                     data['updated_dt'] = ts()
 
                 if with_sync_id:
-                    verifier = self.read1({'_id': data['_id'],
-                        '_sync_id': data.get('_sync_id') or {'$exists': False}}, collection)
+                    verifier = self.read1({
+                        '_id': data['_id'],
+                        '$or': [
+                            {'_sync_id': data.get('_sync_id')},
+                            {'_sync_id': {'$exists': False}},
+                            {'_sync_id': {'$eq': None}},
+                        ]
+                    }, collection)
                     if verifier:
                         data['_sync_id'] = self._get_sync_id()
                         res = self.collection.replace_one({'_id': data['_id']}, data)

@@ -100,15 +100,24 @@ def test_update_with_sync_id():
     dao.create({'vendor': 'my-company'}, 'test')
     data = dao.read1({'vendor': 'my-company'}, 'test')
     assert dao.update(data, with_sync_id=True)['status']['code'] == 200
+
     data['_sync_id'] = '8bd9cf50-acc8-42e8-8736-13102e54efa4'  # some previous value
     assert dao.update(data, with_sync_id=True)['status']['code'] == 204
+
     data['_sync_id'] = ''
     assert dao.update(data, with_sync_id=True)['status']['code'] == 204
     del data['_sync_id']
     assert dao.update(data, with_sync_id=True)['status']['code'] == 204
+
     data = dao.read1({'vendor': 'my-company'}, 'test')
     data['updated_dt'] = 'today-is-the-day'
     assert dao.update(data, with_sync_id=True)['status']['code'] == 200
+    dao.delete({'_id': data['_id']})
+
+    dao.create({'vendor': 'my-company', '_sync_id': None}, 'test')
+    data = dao.read1({'_sync_id': {'$eq': None}}, 'test')
+    assert dao.update(data, with_sync_id=True)['status']['code'] == 200
+    dao.delete({'_id': data['_id']})
 
 
 def test_delete():
