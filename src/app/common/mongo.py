@@ -27,6 +27,7 @@ class MongoDB:
         :param collection: existing pymongo collection object
         :param db: existing pymongo db object
         """
+        fn = '[common.utils.MongoDB][__init__]'
         self.collection = collection_obj
         self.db = db_obj
         collection_name = collection; del collection  # -- to avoid ambiguity
@@ -38,10 +39,10 @@ class MongoDB:
         if db_obj is not None and isinstance(db_obj, Database):
             self.client = db_obj.client
         if db_obj is not None and not isinstance(db_obj, Database):
-            log.error('db_obj: {} is not a Database object'.format(type(db_obj)))
+            log.error(f"{fn} : db_obj: {type(db_obj)} is not a Database object")
             return
         if collection_obj is not None and not isinstance(collection_obj, Collection):
-            log.error('collection_obj: {} is not a Collection object'.format(type(collection_obj)))
+            log.error(f"{fn} : collection_obj: {type(collection_obj)} is not a Collection object")
             return
 
         # -- database basic config
@@ -55,15 +56,15 @@ class MongoDB:
             else:
                 db_config = config['mongo.prod']  if config['mongo.prod'] else config['mongodb']
                 self.environ = 'prod'
-            log.info('Using mongo.{} configuration.'.format(self.environ))
+            log.info(f"Using mongo.{self.environ} configuration.")
         else:
             if db_config:
-                log.info('Using provided db_config: {}'.format(db_config))
+                log.info(f"Using provided db_config: {db_config}")
 
         if db_config:
             db_name = db_config['database']
             self.client = MongoClient(
-                'mongodb://{}:{}/'.format(db_config['host'], db_config['port']),
+                f"mongodb://{db_config['host']}:{db_config['port']}/",
                 connect=False,
                 username=db_config['username'],
                 password=db_config['password'],
@@ -88,29 +89,31 @@ class MongoDB:
             self.collection = self.db[collection_name]
 
         if collection_obj is not None and db_obj is not None:
-            log.info('Using existing connection: {}@{}'.format(self.db.name, self.client.address))
+            log.info(f"Using existing connection: {self.db.name}@{self.client.address}")
         else:
-            log.info('Connection object created for {}'.format(self.db.name))
+            log.info(f"Connection object created for {self.db.name}")
 
 
     def close(self):
+        fn = '[common.utils.MongoDB][close]'
         if self.status():
             self.client.close()
             self.connected = False
-            log.info('DISCONNECTED.')
+            log.info(f"{fn} : DISCONNECTED.")
 
     def status(self):
+        fn = '[common.utils.MongoDB][status]'
         r = False
         try:
             if self.client and self.client.server_info():
                 if isinstance(self.db.name, str):
                     r = True
             if r:
-                log.info('[CONNECTED] Using existing connection: {}@{}'.format(self.db.name, self.client.address))
+                log.info(f"{fn} : [CONNECTED] Using existing connection: {self.db.name}@{self.client.address}")
             else:
-                log.info('NOT CONNECTED.')
+                log.info(f"{fn} : NOT CONNECTED.")
         except ServerSelectionTimeoutError:
-            log.error('MongoDB.status(): Exception occured while using database object.')
+            log.error(f"{fn} : Exception occured while using database object.")
         self.connected = r
         return r
 
@@ -130,13 +133,14 @@ class MongoCRUD:
         :param collection: collection name to change
         :param db: database name to change (collecion is required)
         """
+        fn = '[common.utils.MongoCRUD][cd]'
         if collection and self.connector.status():
             if db:
                 self.collection = self.connector.db.client[db][collection]
-                log.info('Using database: {}'.format(self.connector.db.name))
+                log.info(f"{fn} : Using database: {self.connector.db.name}")
             else:
                 self.collection = self.connector.db[collection]
-                log.info('Using collection: {}.{}'.format(self.connector.db.name, self.collection.name))
+                log.info(f"{fn} : Using collection: {self.connector.db.name}.{self.collection.name}")
 
 
     def create(self, doc=None, collection=None, db=None, add_ts=True):
@@ -146,6 +150,7 @@ class MongoCRUD:
         :param collection: to change collection/table
         :param db: to change database
         """
+        fn = '[common.utils.MongoCRUD][create]'
         log.debug('create: {}'.format(doc))
         self.cd(collection, db)
         count = 0
@@ -173,7 +178,7 @@ class MongoCRUD:
             if r and ins:
                 c = 200
                 m = 'Data inserted.'
-                log.info('create_count: {}, create_ack: {}'.format(count, ins.acknowledged))
+                log.info(f"{fn} : create_count: {count}, create_ack: {ins.acknowledged}")
         except Exception as e:
             c = 500
             m = 'create(): Server Error: {}'.format(e)
@@ -190,6 +195,7 @@ class MongoCRUD:
         :param aggr_type: 'count', 'sum' i.e. aggr_type={'count': 'salary'} or aggr_type={'sum': 'salary'}
         :param like: use find() with $regex i.e. like={'employe_name': '^Ran'}
         """
+        fn = '[common.utils.MongoCRUD][read]'
         self.cd(collection, db)
         r = None
         c = 404
@@ -215,8 +221,8 @@ class MongoCRUD:
             #     else:
             #         pass  # count
 
-            log.info('read(): retrieving docs like: {}{}'.format(dict(statement), \
-                ', {}'.format(projection) if projection else ''))
+            log.info(f"{fn} : retrieving docs like: {dict(statement)}" \
+                     f"{f', {projection}' if projection else ''}")
 
             # -- execute statement
             if isinstance(sort, dict):
@@ -236,7 +242,7 @@ class MongoCRUD:
                 r = data
                 c = 200
                 m = 'OK'
-            log.info('read_count: {}'.format(doc_count))
+            log.info(f"read_count: {doc_count}")
 
         except Exception as e:
             # r = statement
