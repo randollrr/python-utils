@@ -3,7 +3,7 @@ Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
 __authors__ = ['randollrr']
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 
 from copy import deepcopy
 import os
@@ -242,12 +242,12 @@ class MongoCRUD:
                 r = data
                 c = 200
                 m = 'OK'
-            log.info(f"read_count: {doc_count}")
+            log.info(f"{fn} : read_count: {doc_count}")
 
         except Exception as e:
             # r = statement
             c = 500
-            m = 'read(): Server Error: {}'.format(e)
+            m = f"{fn} : Server Error: {e}"
         return self._response(r, c, m)
 
     def read1(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
@@ -267,7 +267,8 @@ class MongoCRUD:
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
         :param with_sync_id: set True to enforce the right user is updating the right version of doc (credit: T. J. Killian)
         """
-        log.debug('update: {}'.format(doc))
+        fn = '[common.utils.MongoCRUD][update]'
+        log.debug(f"{fn} : update: {doc}")
         self.cd(collection, db)
         r = []
         c = 204
@@ -310,13 +311,14 @@ class MongoCRUD:
                     else:
                         m = 'Document was found but not modified.'
 
-                    log.info(
-                        'update_match_count: {}, update_mod: {}, update_ack: {}'.format(
-                            res.matched_count, res.modified_count, res.acknowledged))
+                    log.info(f"{fn} : " \
+                             f"update_match_count: {res.matched_count}, " \
+                             f"update_mod: {res.modified_count}, " \
+                             f"update_ack: {res.acknowledged}")
         except Exception as e:
             r = data
             c = 500
-            m = 'update(): Server Error: {}'.format(e)
+            m = f"{fn} : Server Error: {e}'"
         return self._response(r, c, m)
 
     def delete(self, where=None, collection=None, db=None):
@@ -332,12 +334,13 @@ class MongoCRUD:
             delete({'person.fname': 'Randoll'}   # delete document where {'person': {'fname': 'Randoll'}}
             delete({})                           # delete all in collection, not allowed
         """
+        fn = '[common.utils.MongoCRUD][delete]'
         self.cd(collection, db)
         r = []
         c = 204
         m = 'Nothing happened.'
 
-        log.debug('delete docs like: {}'.format(where))
+        log.debug(f"{fn} : 'delete docs like: {where}'")
         try:
             if where:
                 if isinstance(where, dict):
@@ -354,14 +357,15 @@ class MongoCRUD:
 
                     for s in statement:
                         obj = self.collection.delete_one(s)
-                        log.info('delete_count: {}, delete_ack: {}'.format(obj.deleted_count, obj.acknowledged))
+                        log.info(f"{fn} : 'delete_count: {obj.deleted_count}, " \
+                                 f"delete_ack: {obj.acknowledged}'")
                         r += [{'statement': self._decode_objectid(s), 'delete_count': obj.deleted_count, 'delete_ack':obj.acknowledged}]
                 c = 200
                 m = 'Items deletion have been executed.'
         except Exception as e:
             r = where
             c = 500
-            m = 'delete(): Server Error: {}'.format(e)
+            m = f"{fn} : Server Error: {e}"
         return self._response(r, c, m)
 
 
@@ -405,6 +409,7 @@ class MongoCRUD:
         return str(uuid4())
 
     def _response(self, data=None, rcode=None, message=None):
+        fn = '[common.utils.MongoCRUD][_response]'
         r = {'status': {'code': None, 'message': None}, 'data': []}
 
         if data:
@@ -419,7 +424,7 @@ class MongoCRUD:
                 message = 'Could not format data for response object ({}).'.format(type(data))
 
         r['status'] = {'code': rcode, 'message': message, 'docs': len(r['data'])}
-        log.debug('response: {}'.format(r))
+        log.debug(f"{fn} : {r}")
         return r
 
 
