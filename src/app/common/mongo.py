@@ -56,10 +56,10 @@ class MongoDB:
             else:
                 db_config = config['mongo.prod']  if config['mongo.prod'] else config['mongodb']
                 self.environ = 'prod'
-            log.info(f"Using mongo.{self.environ} configuration.")
+            log.info(f"{fn} : Using mongo.{self.environ} configuration.")
         else:
             if db_config:
-                log.info(f"Using provided db_config: {db_config}")
+                log.info(f"{fn} : Using provided db_config: {db_config}")
 
         if db_config:
             db_name = db_config['database']
@@ -89,9 +89,9 @@ class MongoDB:
             self.collection = self.db[collection_name]
 
         if collection_obj is not None and db_obj is not None:
-            log.info(f"Using existing connection: {self.db.name}@{self.client.address}")
+            log.info(f"{fn} : Using existing connection: {self.db.name}@{self.client.address}")
         else:
-            log.info(f"Connection object created for {self.db.name}")
+            log.info(f"{fn} : Connection object created for {self.db.name}")
 
 
     def close(self):
@@ -151,7 +151,7 @@ class MongoCRUD:
         :param db: to change database
         """
         fn = '[common.utils.MongoCRUD][create]'
-        log.debug('create: {}'.format(doc))
+        log.debug(f"{fn} : {doc}")
         self.cd(collection, db)
         count = 0
         r = None
