@@ -13,7 +13,7 @@ from croniter import croniter
 # -- project-libs
 from common.utils import config, log, Status
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 default_timer = 60  # in second
 
@@ -52,15 +52,15 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
                 args=(_argv[j],) if _argv.get(j) else None)
             process.start()
             s.code = 200
-            s.message = f'{fn} : Job "{j}" was successfully launched.'
+            s.message = f'Job "{j}" was successfully launched.'
             statuses += [s]
             log.info(f"{fn} : {s.message}")
         except Exception as e:
             s.code = 500
-            s.message = f'{fn} : Error encountered while running "{j}" -- ' \
+            s.message = f'Error encountered while running "{j}" -- ' \
                         f'check if exists or the logs. \n{e}'
             statuses += [s]
-            log.error(f"{s.message}")
+            log.error(f"{fn} : {s.message}")
         finally:
             del module
     return statuses
@@ -112,9 +112,7 @@ def get_mod(job_name):
         else:
             log.debug(f'{fn} : module "{job_name}" is now loaded.')
     except Exception as e:
-        log.error(
-            f'{fn} : module "{job_name}" could not be found. Check the path.'
-            f"\n{e}")
+        log.error(f'{fn} : module "{job_name}" could not be found. Check the path.\n{e}')
     return r
 
 
@@ -130,8 +128,7 @@ def get_next_event(timer_str) -> datetime:
         base = datetime.utcnow()-timedelta(seconds=default_timer-1)
         r = croniter(timer_str, base).get_next(datetime)
     except Exception as e:
-        log.error(
-            f"{fn} : error found with cron-formatted timer: {timer_str}\n{e}")
+        log.error(f"{fn} : error found with cron-formatted timer: {timer_str}\n{e}")
     return r
 
 
