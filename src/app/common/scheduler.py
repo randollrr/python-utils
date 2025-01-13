@@ -36,7 +36,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     if isinstance(job_name, str):
         jobs = [job_name]
     if not jobs:
-        jobs, params = get_list()
+        jobs, params = config_get_list()
     if params and isinstance(params, dict):
         log.debug(f"{fn} : parameters: {params}")
         for k, v in params.items():
@@ -66,12 +66,13 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     return statuses
 
 
-def get_list() -> tuple[list, dict]:
+def config_get_list() -> tuple[list, dict]:
     """
     Return runnable jobs for this period.
     :return: list of jobs
     :return: list of parameters for each job
     """
+    fn = '[common.scheduler][config_get_list]'
     jobs = []
     params = []
 
@@ -88,7 +89,7 @@ def get_list() -> tuple[list, dict]:
             jobs += [j]
             params += [{j: t.get('params')}]
 
-    log.debug(f"updated list of jobs: {jobs}")
+    log.debug(f"{fn} : updated list of jobs: {jobs}")
     return jobs, params
 
 
