@@ -13,7 +13,7 @@ from croniter import croniter
 # -- project-libs
 from common.utils import config, log, Status
 
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 
 default_timer = 60  # in second
 
@@ -49,7 +49,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
         try:
             process = Process(
                 target=module.run,
-                args=(_argv[j],) if _argv.get(j) else None)
+                args=(_argv[j],) if _argv.get(j) else ())
             process.start()
             s.code = 200
             s.message = f'Job "{j}" was successfully launched.'
@@ -76,7 +76,7 @@ def get_list() -> tuple[list, dict]:
     params = []
 
     config.read()
-    crons = config['crontab'] if config['crontab'] else []
+    crons = config['crontab'] if not isinstance(config['crontab'], dict) else {}
     for j, t in crons.items():
         v2_plus = True if isinstance(t, dict) else False
         # -- version 1.x.x processing
