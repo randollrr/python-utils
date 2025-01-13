@@ -76,7 +76,7 @@ def get_list() -> tuple[list, dict]:
     params = []
 
     config.read()
-    crons = config['crontab'] if not isinstance(config['crontab'], dict) else {}
+    crons = config['crontab'] if isinstance(config['crontab'], dict) else {}
     for j, t in crons.items():
         v2_plus = True if isinstance(t, dict) else False
         # -- version 1.x.x processing
