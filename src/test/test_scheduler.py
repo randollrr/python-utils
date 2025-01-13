@@ -7,12 +7,12 @@ import common.scheduler as sch
 
 
 def test_get_list():
-    res = sch.get_list()
+    res = sch._config_get_list()
     assert res is not None
 
 
 def test_get_mod():
-    res = sch.get_mod('cron.job_example')
+    res = sch.get_module('cron.job_example')
     assert res is not None
 
 

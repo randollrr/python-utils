@@ -13,9 +13,10 @@ from croniter import croniter
 # -- project-libs
 from common.utils import config, log, Status
 
-__version__ = '1.1.2'
+__version__ = '1.2.0'
 
 default_timer = 60  # in second
+_g = {'previously_loaded': {}}
 
 
 def run_job(job_name:str=None, params:dict=None) -> list[Status]:
@@ -36,7 +37,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     if isinstance(job_name, str):
         jobs = [job_name]
     if not jobs:
-        jobs, params = config_get_list()
+        jobs, params = _config_get_list()
     if params and isinstance(params, dict):
         log.debug(f"{fn} : parameters: {params}")
         for k, v in params.items():
@@ -45,7 +46,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
 
     # -- run jobs
     for j in jobs:
-        module = get_mod(j)
+        module = get_module(j)
         try:
             process = Process(
                 target=module.run,
@@ -66,7 +67,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     return statuses
 
 
-def config_get_list() -> tuple[list, dict]:
+def _config_get_list() -> tuple[list, dict]:
     """
     Return runnable jobs for this period.
     :return: list of jobs
@@ -82,10 +83,10 @@ def config_get_list() -> tuple[list, dict]:
         v2_plus = True if isinstance(t, dict) else False
         # -- version 1.x.x processing
         if not v2_plus:
-            if isexecutable(get_next_event(t)):
+            if isexecutable(get_next_event(t), job_name=j):
                 jobs += [j]
         # -- version 2.x.x processing
-        elif v2_plus and isexecutable(get_next_event(t.get('schedule'))):
+        elif v2_plus and isexecutable(get_next_event(t.get('schedule')), job_name=j):
             jobs += [j]
             params += [{j: t.get('params')}]
 
@@ -93,28 +94,39 @@ def config_get_list() -> tuple[list, dict]:
     return jobs, params
 
 
-def get_mod(job_name):
+def get_module(job_name):
     """
     Try to load module with the run() function.
     """
-    fn = '[common.scheduler][get_mod]'
-    r = None
+    fn = '[common.scheduler][get_module]'
+    module = None
 
     if not job_name:
-        return r
+        return module
     try:
-        r = importlib.import_module(job_name)
-        if 'run' not in dir(r):
-            del r
-            r = None
+        # -- load or reload module
+        if job_name in _g['previously_loaded']:
+            module = importlib.reload(_g['previously_loaded'][job_name])
+            reloaded = True
+        else:
+            module = importlib.import_module(job_name)
+            _g['previously_loaded'][job_name] = module
+            reloaded = False
+
+        # -- validate module
+        if 'run' not in dir(module):
+            del module
+            module = None
             log.error(
                 f'{fn} : "{job_name}" cannot be executed. '
                 f"Make sure there is a run() function in the module.")
         else:
-            log.debug(f'{fn} : module "{job_name}" is now loaded.')
+            log.info(
+                f'{fn} : module "{job_name}" is now '
+                f"{'re-' if reloaded else ''}loaded.")
     except Exception as e:
         log.error(f'{fn} : module "{job_name}" could not be found. Check the path.\n{e}')
-    return r
+    return module
 
 
 def get_next_event(timer_str) -> datetime:
@@ -133,7 +145,7 @@ def get_next_event(timer_str) -> datetime:
     return r
 
 
-def isexecutable(dt:datetime):
+def isexecutable(dt:datetime, job_name:str=None) -> bool:
     """
     Validate event is between [now-default_timer-1]  and [now].
     """
@@ -144,7 +156,9 @@ def isexecutable(dt:datetime):
         st = now-timedelta(seconds=default_timer-1)
         if dt > st and dt <= now:
             r = True
-        log.debug(f"{fn} : ? [{st}] > [{dt}] < [{now}]")
+        log.debug(
+            f"{fn} : ? {st} > [{dt}] < {now} {r} "
+            f"{'('+job_name+')' if job_name else ''}")
     except:
         pass
     return r

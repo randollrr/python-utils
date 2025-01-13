@@ -120,6 +120,7 @@
 - add support to create/delete subfolders
 - added common.create feature to dir_struct() and set_bucket()
 - added override=True to fm.move() to not add +1 to filename if exists at destination
+- updated logging
 
 ### 2.4.2
 - remove conditional general path update
@@ -160,6 +161,16 @@
 
 
 ## common.scheduler
+
+### 1.2.0
+- implement imported module reload
+- other minor updates: formatting, logging, function-renaming
+
+### 1.1.2
+- bugfix: with parsing arguments per cron + protect cron config read
+
+### 1.1.1
+- updated logging messages
 
 ### 1.1.0
 - add support for parameters to scheduler.run_job([params={}])
