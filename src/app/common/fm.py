@@ -5,7 +5,7 @@ import re
 from common.utils import deprecated, log, envar, Status, wd
 
 __authors__ = ['randollrr']
-__version__ = '2.5.0-dev.8'
+__version__ = '2.5.0-dev.9'
 
 
 class FileManager:
@@ -76,6 +76,7 @@ class FileManager:
         :param path: directory (only)
         :return: True or False
         """
+        fn = '[common.fm.FileManager][del_dir]'
         r = False
         try:
             if self.pwd() == f"{path}/fm":
@@ -83,14 +84,14 @@ class FileManager:
             if self._bucket and path.endswith(self._bucket):
                 # os.rmdir(path)
                 # path = path.replace(self._bucket, '')
-                log.warn(f"fm.del_dir(): Cannot delete {self._bucket} in path provided. "
+                log.warn(f"{fn} : fm.del_dir(): Cannot delete {self._bucket} in path provided. "
                             f"Use fm.del_bucket() instead.")
                 return r
             os.rmdir(path)
             r = True
-            log.info(f"removed dir: {path}")
+            log.info(f"{fn} : removed dir: {path}")
         except Exception as e:
-            log.error(f"Couldn't remove directory: {e}.")
+            log.error(f"{fn} : Couldn't remove directory: {e}.")
         return r
 
     def del_files(self, path, files=None, dir_flag=False, fn_pattern=None):
@@ -101,6 +102,7 @@ class FileManager:
         :param fn_pattern: override [files] if provided
         :return: True or False
         """
+        fn = '[common.fm.FileManager][del_files]'
         r = False
         if self.exists(path):
             if fn_pattern:
@@ -116,15 +118,15 @@ class FileManager:
                 for filename in files:
                     try:
                         if filename == '.keep':
-                            log.info(f"skipped: {path}/{filename}")
+                            log.info(f"{fn} : skipped: {path}/{filename}")
                         else:
                             os.remove(os.path.join(path, filename))
-                            log.info(f"deleted: {path}/{filename}")
+                            log.info(f"{fn} : deleted: {path}/{filename}")
                         r = True
                     except Exception as e:
-                        log.error(f"Couldn't remove file: {e}")
+                        log.error(f"{fn} : Couldn't remove file: {e}")
             else:
-                log.debug('Expected a list of files or a path with flag "dir=True"')
+                log.debug(f'{fn} : Expected a list of files or a path with flag "dir=True"')
         return r
 
     def dir_struct(self, path=None, known_dir=None, auto_create=True):
@@ -134,6 +136,7 @@ class FileManager:
         :param known_dir: list of dir paths
         :return: True or False
         """
+        fn = '[common.fm.FileManager][dir_struct]'
         r = False
 
         def update_path(_p, _np):
@@ -161,7 +164,7 @@ class FileManager:
         if known_dir:
             self.known_dir = known_dir
 
-        log.info(f"validate directory structure for: {self._basedir}")
+        log.info(f"{fn} : validate directory structure for: {self._basedir}")
         try:
             # i = 0
             for d in self.known_dir:
@@ -172,13 +175,13 @@ class FileManager:
                     if auto_create:
                         os.makedirs(n_path)
                     else:
-                        log.info(f"  auto_create is off, did not create: {n_path}")
+                        log.info(f"{fn} : auto_create is off, did not create: {n_path}")
                         return r
                 else:
-                    log.debug(f"already exists: {n_path}")
+                    log.debug(f"{fn} : already exists: {n_path}")
             r = True
         except Exception as e:
-            log.error(f"Couldn't setup directory structure.\n{e}")
+            log.error(f"{fn} : Couldn't setup directory structure.\n{e}")
         return r
 
     def exists(self, path=None) -> bool:
@@ -195,7 +198,7 @@ class FileManager:
         :param ret: change type of return values to receive (default: list)
         :return: list of [filename, timestamp], list of [<dict>] or list of [<json>]
         """
-        fn = '[common.fm][find]'
+        fn = '[common.fm.FileManager][find]'
         r = []
         t = {}
 
@@ -458,13 +461,14 @@ class FileManager:
         :param dirname: name to set the subdirectory
         :return None: no return values
         """
+        fn = '[common.fm.FileManager][set_bucket]'
         if not self._bucket:
             self._bucket = str(dirname)
             self.dir_struct(auto_create=auto_create)
-            log.info(f"Bucket is now set to: {self._bucket}.")
+            log.info(f"{fn} : Bucket is now set to: [{self._bucket}]")
         else:
-            log.info(f"Buckets cannot be reset to a different name ({dirname}). "
-                     f'Currently set to "{self._bucket}"')
+            log.info(f"{fn} : Buckets cannot be reset to a different name ({dirname}). "
+                     f"Currently set to [{self._bucket}]")
         return
 
     def set_returns(self, ret='dict') -> None:
