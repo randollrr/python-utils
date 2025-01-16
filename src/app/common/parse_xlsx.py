@@ -6,7 +6,7 @@ import pandas as pd
 from common.utils import deprecated, log
 from common.mongo import dao
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 
 class XlsxDataCollector:
@@ -53,12 +53,12 @@ class XlsxDataCollector:
         fn = '[common.parse_xlsx][read_sheet]'
         r = None
 
-        log.info(f'{fn} : Reading sheet: {sheetname}...')
-
         if not sheetname and not self.sheetname:
             self.sheetname = 0
         elif sheetname:
             self.sheetname = sheetname
+
+        log.info(f'{fn} : Reading sheet: {self.sheetname}...')
 
         try:
             list_cols = None
@@ -141,16 +141,3 @@ class XlsxDataCollector:
         if self.data:
             r = json.dumps(self.data)
         return r
-
-
-# CHANGELOG
-# v0.1.0 Initial implementation
-# v0.2.0 optimized read_sheet():
-# - support no transformers
-# - support headers w/ multi-row or start row other than zero
-# v0.2.1 added support for auto_parse=true|false in constructor (default: True)
-# v0.2.2 added support for read_sheet() to return parsed dict or the df (DataFrame)
-# v0.2.3 bugfix: return var used before assigned
-# v0.2.4 optimized read_sheet() and read_file()
-# v0.3.0 added support to switch between openpyxl (.xlsx) and xlrd (.xls) engines
-# v0.3.1 added support for skiprows in read_sheet()

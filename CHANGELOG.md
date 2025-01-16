@@ -182,3 +182,35 @@
 
 ### 1.0.0
 - initial implementation
+
+
+## common.parse_xlsx
+
+### v0.3.2
+- updated logging in read_sheet()
+
+### v0.3.1
+- added support for skiprows in read_sheet()
+
+### v0.3.0
+- added support to switch between openpyxl (.xlsx) and xlrd (.xls) engines
+
+### v0.2.4
+- optimized read_sheet() and read_file()
+
+### v0.2.3
+- bugfix: return var used before assigned
+
+### v0.2.2
+- added support for read_sheet() to return parsed dict or the df (DataFrame)
+
+### v0.2.1
+- added support for auto_parse=true|false in constructor (default: True)
+
+### v0.2.0
+- optimized read_sheet():
+- support no transformers
+- support headers w/ multi-row or start row other than zero
+
+### v0.1.0
+- Initial implementation
