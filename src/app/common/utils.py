@@ -19,7 +19,6 @@ try:
 except ImportError:
     yaml = None
 
-__authors__ = ['randollrr', 'msmith8']
 __version__ = '1.22.0'
 
 g = {}
