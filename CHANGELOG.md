@@ -7,6 +7,9 @@
 
 ## common.utils.py
 
+### 1.23.0
+- ported oauth.py into utils.OAuth2
+
 ### 1.22.0
 - add do_get() and _do_request()
 

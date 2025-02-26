@@ -291,7 +291,7 @@ class Status:
         return self.__repr__()
 
 
-class Oauth2:
+class OAuth2:
     """
     A typical implementation to obtain a token from an Oauth2 system.
     """
