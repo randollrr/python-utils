@@ -384,9 +384,9 @@ class OAuth2:
             if self._auth_process:
                 if self._auth_basic_type:
                     headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                if self._auth_basic_encoded and self.data.usename and self.data.password:
+                if self._auth_basic_encoded and self.data.username and self.data.password:
                     credentials = base64.encodebytes(bytes(
-                        f"{self.data.usename}:{self.data.password}",
+                        f"{self.data.username}:{self.data.password}",
                         "utf-8")).decode("utf-8")
                     headers['Authorization'] = f"Basic {credentials[:-1]}"
             log.debug(f"{fn} : hearders: {headers}")
