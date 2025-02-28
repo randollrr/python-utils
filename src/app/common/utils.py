@@ -8,7 +8,7 @@ for many apps or scripts. A generic lib to access:
 """
 import base64
 from datetime import datetime, timezone, timedelta
-import json
+import json as jsonp
 import logging
 import os
 import requests
@@ -22,7 +22,7 @@ except ImportError:
 
 __version__ = '1.23.0'
 
-g = {'token': {}}
+g = {}
 UTILS_PART_OF_COMMON = True
 
 
@@ -90,11 +90,11 @@ class Config:
             if yaml and self.file_type() == 'yaml':
                 self.params = yaml.load(f, Loader=yaml.FullLoader)
             else:
-                self.params = json.load(f)
+                self.params = jsonp.load(f)
             self._state = True
 
     def __repr__(self):
-        return json.dumps(self.params, indent=4)
+        return jsonp.dumps(self.params, indent=4)
 
     def __setitem__(self, key, value):
         self.params[key] = value
@@ -118,7 +118,7 @@ class Config:
             if yaml and self.file_type() == 'yaml':
                  yaml.dump(self.params, f)
             else:
-                json.dump(self.params, f, indent=4)
+                jsonp.dump(self.params, f, indent=4)
 
 
 class Log:
@@ -276,7 +276,7 @@ class Status:
         """
         Returns printable string representation of this object.
         """
-        return json.dumps(self.__dict__)
+        return jsonp.dumps(self.__dict__)
 
     def to_dict(self) -> dict:
         """
@@ -295,7 +295,7 @@ class OAuth2:
     """
     A typical implementation to obtain a token from an Oauth2 system.
     """
-
+    g['oauth'] = {'token': {}}
     class Data:
         def __repr__(self) -> str:
             return self.to_json()
@@ -304,7 +304,7 @@ class OAuth2:
             return self.__dict__
 
         def to_json(self) -> str:
-            return json.dumps(self.__dict__, indent=4) if self.__dict__ else None
+            return jsonp.dumps(self.__dict__, indent=4) if self.__dict__ else None
 
     class Endpoints:
         authen = '/authenticate'
@@ -317,7 +317,7 @@ class OAuth2:
             return self.__dict__
 
         def to_json(self) -> str:
-            return json.dumps(self.__dict__, indent=4) if self.__dict__ else None
+            return jsonp.dumps(self.__dict__, indent=4) if self.__dict__ else None
 
     class Headers:
         __dict__ = {'Content-Type': 'application/json',
@@ -336,7 +336,7 @@ class OAuth2:
             return self.__dict__
 
         def to_json(self) -> str:
-            return json.dumps(self.__dict__, indent=4) if self.__dict__ else None
+            return jsonp.dumps(self.__dict__, indent=4) if self.__dict__ else None
 
         def update(self, kv):
             if kv:
@@ -352,14 +352,19 @@ class OAuth2:
         self.data = self.Data()
         self._data_omits = []
         self.ep = self.Endpoints()
-        self.jsonObj = self.Json()
+        self.json = self.Json()
         self.headers = self.Headers()
         self.http_session = http_session if http_session else requests.Session()
         self._token = None
         self._token_keyname = token_keyname if token_keyname else 'access_token'
         self.url = None
 
-    def _do_login(self, headers=None, data=None, jsonObj=None) -> tuple[object, Status]:
+        # -- defaults
+        self.use_basic_authen()
+        self.use_bearer()
+
+
+    def _do_login(self, headers=None, data=None, json=None) -> tuple[object, Status]:
         fn = f"[oauth][_do_login]"
         r = None
         s = Status(204, 'Nothing happened.')
@@ -371,8 +376,8 @@ class OAuth2:
             for k, v in self.data.to_dict().items():
                 if k not in self._data_omits:
                     data[k] = v
-        if not jsonObj:
-            jsonObj = self.jsonObj.to_json()
+        if not json:
+            json = self.json.to_json()
 
         log.info(f"{fn} : sending request to: {self.ep.authen}")
         try:
@@ -380,15 +385,16 @@ class OAuth2:
                 if self._auth_basic_type:
                     headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 if self._auth_basic_encoded:
+                    # ToDo : remove ['ipcontrol']
                     credentials = base64.encodebytes(bytes(
                         f"{config['ipcontrol']['username']}:{config['ipcontrol']['password']}",
                         "utf-8")).decode("utf-8")
                     headers['Authorization'] = f"Basic {credentials[:-1]}"
             log.debug(f"{fn} : hearders: {headers}")
             log.debug(f"{fn} : data: {data}")
-            log.debug(f"{fn} : json: {jsonObj}")
+            log.debug(f"{fn} : json: {json}")
             res = self.http_session.post(self.ep.authen, headers=headers, data=data,
-                json=jsonObj, verify=False)
+                json=json, verify=False)
             if res and res.status_code == 200:
                 r = res.json()
                 s.code = 200
@@ -408,10 +414,10 @@ class OAuth2:
 
     def expired(self) -> bool:
         r = True
-        if isinstance(g.get('expired_dt'), datetime) \
-            and g['expired_dt'] < datetime.now():
+        if isinstance(g['oauth'].get('expired_dt'), datetime) \
+            and g['oauth']['expired_dt'] < datetime.now():
             r = False
-        if g.get('expiry_type') and g['expiry_type']:
+        if g['oauth'].get('expiry_type') and g['oauth']['expiry_type']:
             ...
         return r
 
@@ -425,9 +431,9 @@ class OAuth2:
 
         # -- validate token
         if not self.expired():
-            return g['token']
-        g['token'] = {}
-        g['expired_dt'] = None
+            return g['oauth']['token']
+        g['oauth']['token'] = {}
+        g['oauth']['expired_dt'] = None
 
         # -- or get new token
         try:
@@ -435,7 +441,7 @@ class OAuth2:
             res, res_status = self._do_login()
             if res:
                 r = res.get(token_keyname)
-                self._token = g['token'] = r
+                self._token = g['oauth']['token'] = r
                 log.debug(f"{fn} : {token_keyname}: {r}")
             else:
                 log.error(f"{fn} : " \
@@ -471,26 +477,26 @@ class OAuth2:
 
         # -- timelapse
         if kind == 'timelapse':
-            g['expired_dt'] = datetime.now()+timedelta(seconds=exp)
+            g['oauth']['expired_dt'] = datetime.now()+timedelta(seconds=exp)
 
         # -- date
         elif kind == 'date':
             dt_fmt = '%Y-%m-%dT%H:%M:%S'
             try:
-                g['expired_dt'] = datetime.strptime(exp, dt_fmt)
+                g['oauth']['expired_dt'] = datetime.strptime(exp, dt_fmt)
             except:
                 try:
-                    g['expired_dt'] = datetime.strptime(exp[:10], dt_fmt)
+                    g['oauth']['expired_dt'] = datetime.strptime(exp[:10], dt_fmt)
                 except:
                     msg_exp = '(default)'
                     log.error(f"{fn} : Could not parse expiration timeframe. (set: 24hrs){msg_exp}")
-                    g['expired_dt'] = datetime.now()+timedelta(days=1)
+                    g['oauth']['expired_dt'] = datetime.now()+timedelta(days=1)
         # -- from token
         else:
             ...  #ToDo:
-        g['expiry_type'] = kind
+        g['oauth']['expiry_type'] = kind
 
-        log.info(f"{fn} : token expires on {datetime.strftime(g['expired_dt'], dt_fmt)} {msg_exp}")
+        log.info(f"{fn} : token expires on {datetime.strftime(g['oauth']['expired_dt'], dt_fmt)} {msg_exp}")
         return
 
     def use_basic_authen(self, b64=False, data_omits=None):
@@ -500,8 +506,8 @@ class OAuth2:
         if isinstance(data_omits, list):
             self._data_omits = data_omits
 
-    def use_bearer(self):
-        self._bearer = True
+    def use_bearer(self, set_to=True):
+        self._bearer = set_to
 
 
 def envar(txt) -> str:
@@ -594,23 +600,52 @@ def rwjson(action, key_fn) -> None:
     if action == 'read':
         try:
             with open(f"{g['_rwpath']}/{g['_rwfn']}", 'r') as f:
-                g[key_fn] = json.load(f)
+                g[key_fn] = jsonp.load(f)
         except:
             pass
     if action == 'write':
         with open(f"{g['_rwpath']}/{g['_rwfn']}", 'w') as f:
-            json.dump(g[key_fn], f)
+            jsonp.dump(g[key_fn], f)
     return
 
 
-def ts(kind=None):
-    dt = datetime.now(timezone.utc)
-    if not kind:
-        r = datetime.strftime(dt, '%Y-%m-%dT%H:%M:%SZ')
-    elif kind == 'date':
-        r = datetime.strftime(dt, '%Y-%m-%d')
-    elif kind == 'object':
-        r = dt
+def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None) -> object:
+    """
+    Provide the current timestamp in various formats.
+    :param kind: (deprecated, same as ret)
+    :param ret: string to describe expected return value type (default: iso8601)
+    :param from_dt: use string as input
+    :param from_ts: use int[timestamp] as input
+    :return: object|string
+    Example:
+        ts(ret='date', from_dt='2024-01-31T23:59:59')
+        ts(ret='object', from_dt='2024-01-31T23:59:59')
+        ts(ret='iso8601', from_ts=1234567890)
+        ts(from_obj=datetime.now(timezone.utc))
+    """
+    fn = '[common.utils][ts]'
+    r = None
+
+    try:
+        # -- get datetime object
+        if not from_dt and not from_ts and not from_obj:
+            dt = datetime.now(timezone.utc)
+        elif from_obj:
+            dt = from_obj
+        elif from_dt:
+            dt = datetime.strptime(from_dt, '%Y-%m-%dT%H:%M:%SZ')
+        elif from_ts:
+            dt = datetime.fromtimestamp(from_ts, timezone.utc)
+
+        # -- set return value
+        if kind == 'date' or ret == 'date':
+            r = datetime.strftime(dt, '%Y-%m-%d')
+        elif kind == 'object' or ret == 'object':
+            r = dt
+        elif not kind or not ret or ret == 'iso8601':
+            r = datetime.strftime(dt, '%Y-%m-%dT%H:%M:%SZ')
+    except Exception as e:
+        log.error(f"{fn} : {e}")
     return r
 
 
