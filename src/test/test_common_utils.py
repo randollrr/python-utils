@@ -98,7 +98,7 @@ def test_route_next_add(text, ret):
 def test_ts():
     dt_dt = '2024-01-31T23:59:59Z'
     dt_obj = datetime(2024, 1, 31, 23, 59, 59).astimezone(timezone.utc)
-    dt_ts = dt_obj.timestamp()
+    dt_ts = int(dt_obj.timestamp())
 
     assert ts('date', from_dt=dt_dt) == '2024-01-31'
     assert ts('object', from_obj=dt_obj) == dt_obj
