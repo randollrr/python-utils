@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
 
 import pytest
-from common.utils import config, envar, envar_in, Email, log, Status, next_add
+from common.utils import config, envar, envar_in, Email, log, Status, next_add, \
+    ts
 
 
 def test_config_file_type():
@@ -92,3 +94,20 @@ def test_status():
 def test_route_next_add(text, ret):
     res = next_add(text)
     assert res == ret
+
+def test_ts():
+    dt_dt = '2024-01-31T23:59:59Z'
+    dt_obj = datetime(2024, 1, 31, 23, 59, 59).astimezone(timezone.utc)
+    dt_ts = dt_obj.timestamp()
+
+    assert ts('date', from_dt=dt_dt) == '2024-01-31'
+    assert ts('object', from_obj=dt_obj) == dt_obj
+    assert ts('object', from_ts=dt_ts) == datetime.fromtimestamp(dt_ts, timezone.utc)
+    assert ts(from_obj=dt_obj) == '2024-01-31T23:59:59Z'
+    assert ts(from_dt=dt_dt) == '2024-01-31T23:59:59Z'
+
+    assert ts()
+    # assert ts('date') == '2025-02-28'
+    assert ts('object', from_dt='2024-01-31T23:59:59') == None
+    assert ts(from_ts=1234567890)
+    assert ts(from_obj=datetime.now(timezone.utc))
