@@ -2,8 +2,7 @@
 Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
-__authors__ = ['randollrr']
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
 from copy import deepcopy
 import os
@@ -27,7 +26,7 @@ class MongoDB:
         :param collection: existing pymongo collection object
         :param db: existing pymongo db object
         """
-        fn = '[common.utils.MongoDB][__init__]'
+        fn = '[common.mongo.MongoDB][__init__]'
         self.collection = collection_obj
         self.db = db_obj
         collection_name = collection; del collection  # -- to avoid ambiguity
@@ -95,14 +94,14 @@ class MongoDB:
 
 
     def close(self):
-        fn = '[common.utils.MongoDB][close]'
+        fn = '[common.mongo.MongoDB][close]'
         if self.status():
             self.client.close()
             self.connected = False
             log.info(f"{fn} : DISCONNECTED.")
 
     def status(self):
-        fn = '[common.utils.MongoDB][status]'
+        fn = '[common.mongo.MongoDB][status]'
         r = False
         try:
             if self.client and self.client.server_info():
@@ -133,11 +132,12 @@ class MongoCRUD:
         :param collection: collection name to change
         :param db: database name to change (collecion is required)
         """
-        fn = '[common.utils.MongoCRUD][cd]'
+        fn = '[common.mongo.MongoCRUD][cd]'
         if collection and self.connector.status():
             if db:
                 self.collection = self.connector.db.client[db][collection]
                 log.info(f"{fn} : Using database: {self.connector.db.name}")
+                log.info(f"{fn} : and collection: {self.connector.db.name}.{self.collection.name}")
             else:
                 self.collection = self.connector.db[collection]
                 log.info(f"{fn} : Using collection: {self.connector.db.name}.{self.collection.name}")
@@ -150,7 +150,7 @@ class MongoCRUD:
         :param collection: to change collection/table
         :param db: to change database
         """
-        fn = '[common.utils.MongoCRUD][create]'
+        fn = '[common.mongo.MongoCRUD][create]'
         log.debug(f"{fn} : {doc}")
         self.cd(collection, db)
         count = 0
@@ -182,6 +182,7 @@ class MongoCRUD:
         except Exception as e:
             c = 500
             m = 'create(): Server Error: {}'.format(e)
+            log.error(f"{fn} : {m}")
         return self._response(r, c, m)
 
     def read(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
@@ -195,7 +196,7 @@ class MongoCRUD:
         :param aggr_type: 'count', 'sum' i.e. aggr_type={'count': 'salary'} or aggr_type={'sum': 'salary'}
         :param like: use find() with $regex i.e. like={'employe_name': '^Ran'}
         """
-        fn = '[common.utils.MongoCRUD][read]'
+        fn = '[common.mongo.MongoCRUD][read]'
         self.cd(collection, db)
         r = None
         c = 404
@@ -248,6 +249,7 @@ class MongoCRUD:
             # r = statement
             c = 500
             m = f"{fn} : Server Error: {e}"
+            log.error(f"{fn} : {m}")
         return self._response(r, c, m)
 
     def read1(self, where=None, collection=None, db=None, projection=None, sort=None, aggr_cols=None, aggr_type=None, like=None):
@@ -267,7 +269,7 @@ class MongoCRUD:
         :param set: use $set to update field i.e. where={'_id': '5e1ab71ed4a0e6a7bdd5233f'}, set={'employe_name': 'Randoll'}
         :param with_sync_id: set True to enforce the right user is updating the right version of doc (credit: T. J. Killian)
         """
-        fn = '[common.utils.MongoCRUD][update]'
+        fn = '[common.mongo.MongoCRUD][update]'
         log.debug(f"{fn} : update: {doc}")
         self.cd(collection, db)
         r = []
@@ -316,9 +318,10 @@ class MongoCRUD:
                              f"update_mod: {res.modified_count}, " \
                              f"update_ack: {res.acknowledged}")
         except Exception as e:
-            r = data
+            r = data; del data
             c = 500
             m = f"{fn} : Server Error: {e}'"
+            log.error(f"{fn} : {m}")
         return self._response(r, c, m)
 
     def delete(self, where=None, collection=None, db=None):
@@ -334,7 +337,7 @@ class MongoCRUD:
             delete({'person.fname': 'Randoll'}   # delete document where {'person': {'fname': 'Randoll'}}
             delete({})                           # delete all in collection, not allowed
         """
-        fn = '[common.utils.MongoCRUD][delete]'
+        fn = '[common.mongo.MongoCRUD][delete]'
         self.cd(collection, db)
         r = []
         c = 204
@@ -366,6 +369,7 @@ class MongoCRUD:
             r = where
             c = 500
             m = f"{fn} : Server Error: {e}"
+            log.error(f"{fn} : {m}")
         return self._response(r, c, m)
 
 
@@ -409,7 +413,7 @@ class MongoCRUD:
         return str(uuid4())
 
     def _response(self, data=None, rcode=None, message=None):
-        fn = '[common.utils.MongoCRUD][_response]'
+        fn = '[common.mongo.MongoCRUD][_response]'
         r = {'status': {'code': None, 'message': None}, 'data': []}
 
         if data:
