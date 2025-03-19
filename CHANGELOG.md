@@ -7,6 +7,10 @@
 
 ## common.utils.py
 
+### 1.23.1
+- updated OAuth2
+- updated ts(), added new functionalities
+
 ### 1.23.0
 - ported oauth.py into utils.OAuth2
 

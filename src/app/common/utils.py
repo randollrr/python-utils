@@ -20,7 +20,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.23.0'
+__version__ = '1.23.1'
 
 g = {}
 UTILS_PART_OF_COMMON = True
@@ -293,9 +293,37 @@ class Status:
 
 class OAuth2:
     """
-    A typical implementation to obtain a token from an Oauth2 system.
+    A typical implementation to obtain a token from an OAuth2 system.
+
+    Usage: ...
+
+    # -- initialize oauth
+    session = requests.Session()
+    oauth = OAuth2(token_keyname='access_token', exp_keyname='expires_in',
+                   http_session=session)
+    oauth.url = config['ipam']['api-url']
+    oauth.ep.authen = f"{oauth.url}/login"
+
+    # -- set http header and data field
+    oauth.headers.apikey = config['ipam']['api-key']
+    oauth.data.username = config['ipam']['username']
+    oauth.data.password = config['ipam']['password']
+
+    # -- send request to get token
+    [oauth.handle_expiry(kind='timelapse')]
+    [oauth.use_basic_authen(b64=True, data_omits=['username', 'password'])]
+    [oauth.use_basic_authen()]
+    [oauth.use_bearer()]
+    oauth.get_token()
+
+    # -- setup common endpoints
+    oauth.ep.ip_address = f"{oauth.url}/Gets/getDeviceByIPAddr"
+    oauth.ep.hostname = f"{oauth.url}/Gets/getDeviceByHostname"
+    oauth.ep.mac_address = f"{oauth.url}/Gets/getDeviceByMACAddress"
+    oauth.ep.start_address = f"{oauth.url}/Gets/getAddressPool"
+
     """
-    g['oauth'] = {'token': {}}
+    # g['oauth'] = {'token': {}}
     class Data:
         def __repr__(self) -> str:
             return self.to_json()
@@ -343,7 +371,7 @@ class OAuth2:
                 for k, v in kv.items():
                     self.__setattr__(k, v)
 
-    def __init__(self, http_session=None, token_keyname=None) -> None:
+    def __init__(self, http_session=None, token_type=None, token_keyname=None, exp_keyname=None) -> None:
         self._auth_basic_type = False
         self._auth_basic_encoded = False
         self._auth_process = False
@@ -355,17 +383,26 @@ class OAuth2:
         self.json = self.Json()
         self.headers = self.Headers()
         self.http_session = http_session if http_session else requests.Session()
-        self._token = None
-        self._token_keyname = token_keyname if token_keyname else 'access_token'
         self.url = None
 
+        # -- standard oauth2 response
+        self._access_token = None
+        self._token_expires = None
+        self._scope = None
+        self._token_type = token_type if token_type else 'bearer'
+        self._refresh_token = None
+
         # -- defaults
+        self._token_keyname = token_keyname if token_keyname else 'access_token'
+        self._exp_keyname = exp_keyname if exp_keyname else 'expires_in'
+        self._exp_type = 'timelapse'  # other values: 'datetime', 'date'
         self.use_basic_authen()
-        self.use_bearer()
+        if token_type == 'bearer':
+            self.use_bearer()
 
 
     def _do_login(self, headers=None, data=None, json=None) -> tuple[object, Status]:
-        fn = f"[oauth][_do_login]"
+        fn = f"[common.utils.OAuth2][_do_login]"
         r = None
         s = Status(204, 'Nothing happened.')
 
@@ -396,6 +433,13 @@ class OAuth2:
                 json=json, verify=False)
             if res and res.status_code == 200:
                 r = res.json()
+
+                self._access_token = r[self._token_keyname] if r.get(self._token_keyname) else None
+                self.handle_expiry(exp=r.get(self._exp_keyname))   # update self._token_expires
+                self._scope = r['scope'] if r.get('scope') else None
+                self._token_type = r['token'] if r.get('token_type') else None
+                self._refresh_token = r['refresh_token'] if r.get('refresh_token') else None
+
                 s.code = 200
                 s.message = 'OK'
                 if self._auth_process:
@@ -413,15 +457,15 @@ class OAuth2:
 
     def expired(self) -> bool:
         r = True
-        if isinstance(g['oauth'].get('expired_dt'), datetime) \
-            and g['oauth']['expired_dt'] < datetime.now():
+        # if isinstance(g['oauth'].get('expired_dt'), datetime) \
+        #     and g['oauth']['expired_dt'] < datetime.now():
+        if isinstance(self._token_expires, datetime) and \
+            self._token_expires > datetime.now():
             r = False
-        if g['oauth'].get('expiry_type') and g['oauth']['expiry_type']:
-            ...
         return r
 
     def get_token(self, token_keyname=None) -> dict:
-        fn = f"[oauth][get_token]"
+        fn = f"[common.utils.OAuth2][get_token]"
         r = None
 
         # dt = ts(kind='date')
@@ -430,17 +474,21 @@ class OAuth2:
 
         # -- validate token
         if not self.expired():
-            return g['oauth']['token']
-        g['oauth']['token'] = {}
-        g['oauth']['expired_dt'] = None
+            # return g['oauth']['token']
+            return self._access_token
+
+        # g['oauth']['token'] = {}
+        # g['oauth']['expired_dt'] = None
+        self._access_token = None
+        self._token_expires = None
 
         # -- or get new token
         try:
             self._auth_process = True
             res, res_status = self._do_login()
-            if res:
+            if res and res.get(token_keyname):
                 r = res.get(token_keyname)
-                self._token = g['oauth']['token'] = r
+                # self._access_token = g['oauth']['token'] = r
                 log.debug(f"{fn} : {token_keyname}: {r}")
             else:
                 log.error(f"{fn} : " \
@@ -450,52 +498,66 @@ class OAuth2:
                 "Failed to get API token. Please verify all credentials." \
                 f"\n{e}")
 
-        if self._bearer and self._token:
-            self.headers.Authorization = f"Bearer {self._token}"
+        if self._bearer and self._access_token:
+            self.headers.Authorization = f"Bearer {self._access_token}"
         return r
 
-    def handle_expiry(self, kind=None, exp={}):  # ToDo: ...
+    def handle_expiry(self, kind=None, exp=None):
         """
-        kind: timelapse|date
-        key_value: {name: value}
+        kind: timelapse|datetime|date
+        exp: {name: value}
+
         Example:
+            oauth.handle_expiry()
+            oauth.handle_expiry(kind='timelapse')
             oauth.handle_expiry(kind='timelapse', exp=3600)
-            oauth.handle_expiry(kind='keyname', exp='expires_in')  # from token
-            oauth.handle_expiry(kind='date', exp='2024-01-31T23:59:59')
+            oauth.handle_expiry(kind='datetime', exp='2024-01-31T23:59:59')
             oauth.handle_expiry(kind='date', exp='2024-01-31')
         """
-        fn = f"[oauth][handle_expiry]"
+        fn = f"[common.utils.OAuth2][handle_expiry]"
         dt_fmt = '%Y-%m-%dT%H:%M:%SZ'
         msg_exp = ''
 
         if not kind:
-            kind = 'timelapse'
+            kind = self._exp_type if self._exp_type else 'timelapse'
+        else:
+            self._exp_type = kind
         if not exp:
             msg_exp = '(default)'
-            exp = 86400
+            # exp = 86400
+            exp = 3600
 
         # -- timelapse
-        if kind == 'timelapse':
-            g['oauth']['expired_dt'] = datetime.now()+timedelta(seconds=exp)
+        if kind == 'timelapse' and str(exp).isdigit():
+            # g['oauth']['expired_dt'] = datetime.now()+timedelta(seconds=exp)
+            self._token_expires = datetime.now()+timedelta(seconds=exp)
 
-        # -- date
+        # -- date and datetime
         elif kind == 'date':
             dt_fmt = '%Y-%m-%dT%H:%M:%S'
             try:
-                g['oauth']['expired_dt'] = datetime.strptime(exp, dt_fmt)
+                # g['oauth']['expired_dt'] = datetime.strptime(exp, dt_fmt)
+                self._token_expires = datetime.strptime(exp, dt_fmt)
             except:
                 try:
-                    g['oauth']['expired_dt'] = datetime.strptime(exp[:10], dt_fmt)
+                    # g['oauth']['expired_dt'] = datetime.strptime(exp[:10], dt_fmt)
+                    self._token_expires = datetime.strptime(exp[:10], dt_fmt)
                 except:
                     msg_exp = '(default)'
                     log.error(f"{fn} : Could not parse expiration timeframe. (set: 24hrs){msg_exp}")
-                    g['oauth']['expired_dt'] = datetime.now()+timedelta(days=1)
+                    # g['oauth']['expired_dt'] = datetime.now()+timedelta(days=1)
+                    self._token_expires = datetime.now()+timedelta(days=1)
+
         # -- from token
         else:
             ...  #ToDo:
-        g['oauth']['expiry_type'] = kind
 
-        log.info(f"{fn} : token expires on {datetime.strftime(g['oauth']['expired_dt'], dt_fmt)} {msg_exp}")
+        # g['oauth']['expiry_type'] = kind
+        # log.info(f"{fn} : token expires on {datetime.strftime(g['oauth']['expired_dt'], dt_fmt)} {msg_exp}")
+        if self._token_expires:
+            log.info(f"{fn} : token expires on {datetime.strftime(self._token_expires, dt_fmt)} {msg_exp}")
+        else:
+            log.error(f"{fn} : token expiration isnot set")
         return
 
     def use_basic_authen(self, b64=False, data_omits=None):
@@ -506,6 +568,8 @@ class OAuth2:
             self._data_omits = data_omits
 
     def use_bearer(self, set_to=True):
+        if set_to and not self._token_type:
+            self._token_type = 'bearer'
         self._bearer = set_to
 
 
