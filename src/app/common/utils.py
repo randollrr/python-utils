@@ -399,7 +399,7 @@ class OAuth2:
         self.use_basic_authen()
         if token_type == 'bearer':
             self.use_bearer()
-
+        return
 
     def _do_login(self, headers=None, data=None, json=None) -> tuple[object, Status]:
         fn = f"[common.utils.OAuth2][_do_login]"
@@ -437,8 +437,11 @@ class OAuth2:
                 self._access_token = r[self._token_keyname] if r.get(self._token_keyname) else None
                 self.handle_expiry(exp=r.get(self._exp_keyname))   # update self._token_expires
                 self._scope = r['scope'] if r.get('scope') else None
-                self._token_type = r['token'] if r.get('token_type') else None
+                self._token_type = r['token_type'] if r.get('token_type') else None
                 self._refresh_token = r['refresh_token'] if r.get('refresh_token') else None
+
+                if self._token_type == 'bearer':
+                    self.use_bearer()
 
                 s.code = 200
                 s.message = 'OK'
@@ -548,7 +551,7 @@ class OAuth2:
                     # g['oauth']['expired_dt'] = datetime.now()+timedelta(days=1)
                     self._token_expires = datetime.now()+timedelta(days=1)
 
-        # -- from token
+        # -- ??? from token
         else:
             ...  #ToDo:
 
