@@ -36,6 +36,5 @@ def test_get_token(oauth):
         'token_type': 'bearer',
         'expires_in': 3600
     }
-    login_token = oauth._do_login()
     res = oauth.get_token(token)
     assert res == True
