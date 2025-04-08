@@ -20,7 +20,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.23.1'
+__version__ = '1.24.0'
 
 g = {}
 UTILS_PART_OF_COMMON = True
@@ -372,7 +372,7 @@ class OAuth2:
                     self.__setattr__(k, v)
 
     def __init__(self, http_session=None, token_type=None, token_keyname=None, exp_keyname=None) -> None:
-        self._auth_basic_type = False
+        self._auth_basic_formencoded = False
         self._auth_basic_encoded = False
         self._auth_process = False
         self._bearer = False
@@ -413,13 +413,14 @@ class OAuth2:
             for k, v in self.data.to_dict().items():
                 if k not in self._data_omits:
                     data[k] = v
+            data = jsonp.dumps(data)
         if not json:
             json = self.json.to_json()
 
         log.info(f"{fn} : sending request to: {self.ep.authen}")
         try:
             if self._auth_process:
-                if self._auth_basic_type:
+                if self._auth_basic_formencoded:
                     headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 if self._auth_basic_encoded and self.data.username and self.data.password:
                     credentials = base64.encodebytes(bytes(
@@ -431,6 +432,7 @@ class OAuth2:
             log.debug(f"{fn} : json: {json}")
             res = self.http_session.post(self.ep.authen, headers=headers, data=data,
                 json=json, verify=False)
+            log.debug(f"{fn} : response object (repr) : {res}")
             if res and res.status_code == 200:
                 r = res.json()
 
@@ -563,8 +565,8 @@ class OAuth2:
             log.error(f"{fn} : token expiration isnot set")
         return
 
-    def use_basic_authen(self, b64=False, data_omits=None):
-        self._auth_basic_type = True
+    def use_basic_authen(self, b64=False, data_omits=None, via_form=True):
+        self._auth_basic_formencoded = via_form
         if b64:
             self._auth_basic_encoded = True
         if isinstance(data_omits, list):
