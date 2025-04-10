@@ -13,7 +13,7 @@ from croniter import croniter
 # -- project-libs
 from common.utils import config, log, Status
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 default_timer = 60  # in second
 _g = {'previously_loaded': {}}
@@ -54,13 +54,13 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
             process.start()
             s.code = 200
             s.message = f'Job "{j}" was successfully launched.'
-            statuses += [s]
+            statuses += [s.to_dict()]
             log.info(f"{fn} : {s.message}")
         except Exception as e:
             s.code = 500
             s.message = f'Error encountered while running "{j}" -- ' \
                         f'check if exists or the logs. \n{e}'
-            statuses += [s]
+            statuses += [s.to_dict()]
             log.error(f"{fn} : {s.message}")
         finally:
             del module
