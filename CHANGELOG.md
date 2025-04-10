@@ -169,6 +169,9 @@
 
 ## common.scheduler
 
+### 1.2.1
+- converted status object to dict to be json serialization ready
+
 ### 1.2.0
 - implement imported module reload
 - other minor updates: formatting, logging, function-renaming
