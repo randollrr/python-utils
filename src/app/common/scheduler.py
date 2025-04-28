@@ -13,7 +13,7 @@ from croniter import croniter
 # -- project-libs
 from common.utils import config, log, Status
 
-__version__ = '1.2.1'
+__version__ = '1.2.2'
 
 default_timer = 60  # in second
 _g = {'previously_loaded': {}}
@@ -23,7 +23,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     """
     Run jobs.
     :param job_name: name of the job to run
-    :param params: optional parameters for the job e.g. {key: value, ...}
+    :param params: optional parameters for the job e.g. {job_name: {key: value, ...}}
     """
     fn = '[common.scheduler][run_job]'
     s = Status(204, f"No job ran.")
@@ -36,13 +36,15 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     # -- validate parameters
     if isinstance(job_name, str):
         jobs = [job_name]
-    if not jobs:
+    if not jobs and not params:
         jobs, params = _config_get_list()
     if params and isinstance(params, dict):
         log.debug(f"{fn} : parameters: {params}")
         for k, v in params.items():
             _argv.update({k: (v,)})
-        del params
+            if k not in jobs:
+                jobs += [k]
+    del params
 
     # -- run jobs
     for j in jobs:
