@@ -3,10 +3,10 @@ import json
 
 import pandas as pd
 
-from common.utils import deprecated, log
+from common.utils import deprecated, log, ts
 from common.mongo import dao
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
 
 class XlsxDataCollector:
@@ -48,7 +48,7 @@ class XlsxDataCollector:
         except Exception as e:
             log.error(f"{fn} : File type error, Excel (xlsx) file is expected. \n{e}")
 
-    def read_sheet(self, sheetname=None, sort_by=None, headers=0, ret='dict'):
+    def read_sheet(self, sheetname=None, sort_by=None, headers=0, dates=[], ret='dict'):
         """Reads the sheet and returns the data as a list of dict."""
         fn = '[common.parse_xlsx][read_sheet]'
         r = None
@@ -72,6 +72,9 @@ class XlsxDataCollector:
                 header=headers)
             if sort_by:
                 df = df.sort_values(by=sort_by)
+            for dat in dates:
+                # df[dat] = df[dat].replace({pd.NaT: None})
+                df[dat] = df[dat].apply(self.process_date)
             data = df.fillna('').to_dict('records')
 
             self.data = []
@@ -92,6 +95,12 @@ class XlsxDataCollector:
 
     def parse(self):
         pass
+
+    def process_date(self, d_val):
+        if d_val is pd.NaT:
+            return None
+        else:
+            return ts(from_obj=d_val)
 
     @deprecated
     def save2db(self, data=None, collection=None, truncate=False, where={}):
