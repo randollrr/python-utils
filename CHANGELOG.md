@@ -196,6 +196,9 @@
 
 ## common.parse_xlsx
 
+### v0.4.0
+- added support to auto-convert dates (from column list) to iso8601
+
 ### v0.3.2
 - updated logging in read_sheet()
 
