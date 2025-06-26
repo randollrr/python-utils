@@ -2,7 +2,7 @@
 Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
-__version__ = '1.4.3'
+__version__ = '1.5.0'
 
 from copy import deepcopy
 import os
@@ -324,7 +324,7 @@ class MongoCRUD:
             log.error(f"{fn} : {m}")
         return self._response(r, c, m)
 
-    def delete(self, where=None, collection=None, db=None):
+    def delete(self, where=None, collection=None, db=None, truncate=False):
         """
         Remove document or object in document.
         :param statement: document/object to query to remove
@@ -345,6 +345,12 @@ class MongoCRUD:
 
         log.debug(f"{fn} : 'delete docs like: {where}'")
         try:
+            if truncate and not where:
+                where = self.read({}, collection, projection={'_id': True})['data']
+                log.info(f"{fn} : {collection} is set to be truncated.")
+            else:
+                m += " Criteria/parameters are missing."
+
             if where:
                 if isinstance(where, dict):
                     where = [where]
