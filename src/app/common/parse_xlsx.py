@@ -6,7 +6,7 @@ import pandas as pd
 from common.utils import deprecated, log, ts
 from common.mongo import dao
 
-__version__ = '0.4.0'
+__version__ = '0.5.1'
 
 
 class XlsxDataCollector:
@@ -18,6 +18,7 @@ class XlsxDataCollector:
         self.sheetname = sheetname
         self.transformer = transformer if isinstance(transformer, dict) else None
         self.skiprows = skiprows
+        self.no_zero_ts = None
 
         # -- read file and parse
         if auto_parse:
@@ -48,7 +49,8 @@ class XlsxDataCollector:
         except Exception as e:
             log.error(f"{fn} : File type error, Excel (xlsx) file is expected. \n{e}")
 
-    def read_sheet(self, sheetname=None, sort_by=None, headers=0, dates=[], ret='dict'):
+    def read_sheet(self, sheetname=None, sort_by=None, headers=0, dates=[],
+                   no_zero_ts=False, ret='dict'):
         """Reads the sheet and returns the data as a list of dict."""
         fn = '[common.parse_xlsx][read_sheet]'
         r = None
@@ -57,6 +59,7 @@ class XlsxDataCollector:
             self.sheetname = 0
         elif sheetname:
             self.sheetname = sheetname
+        self.no_zero_ts = no_zero_ts
 
         log.info(f'{fn} : Reading sheet: {self.sheetname}...')
 
@@ -100,7 +103,10 @@ class XlsxDataCollector:
         if d_val is pd.NaT:
             return None
         else:
-            return ts(from_obj=d_val)
+            r = ts(from_obj=d_val)
+            if self.no_zero_ts:
+                r = r.replace('T00:00:00Z', '')
+            return r
 
     @deprecated
     def save2db(self, data=None, collection=None, truncate=False, where={}):
@@ -120,9 +126,7 @@ class XlsxDataCollector:
             collection = 'parsed_xlsx_data'
         if data:
             if truncate:
-                dao.delete(
-                    dao.read(where=where, collection=collection)['data'],
-                    collection=collection)
+                dao.delete({}, collection=collection, truncate=True)
             r = dao.create(data, collection)
         return r
 
