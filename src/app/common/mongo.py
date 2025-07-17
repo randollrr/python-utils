@@ -2,7 +2,7 @@
 Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 
 from copy import deepcopy
 import os
@@ -209,7 +209,9 @@ class MongoCRUD:
             if where:
                 where = self._encode_objectid(where)
                 for k in where:
-                    if where[k] is None:
+                    if where[k] == 'null':
+                        statement += [(k, None)]
+                    elif where[k] is None:
                         statement += [(k, {'$exists': False})]
                     else:
                         statement += [(k, where[k])]
