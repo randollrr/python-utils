@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # -- built-ins
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import importlib
 from multiprocessing import Process
 from sys import argv
@@ -11,9 +11,9 @@ import threading
 from croniter import croniter
 
 # -- project-libs
-from common.utils import config, log, Status
+from common.utils import config, log, Status, ts
 
-__version__ = '1.2.2'
+__version__ = '1.3.0'
 
 default_timer = 60  # in second
 _g = {'previously_loaded': {}}
@@ -131,20 +131,28 @@ def get_module(job_name):
     return module
 
 
-def get_next_event(timer_str) -> datetime:
+def get_next_event(timer_str, count=1) -> datetime:
     """
     Returns next event time (object)
     :param time_str: cron formatted schedule string (https://en.wikipedia.org/wiki/Cron)
     :return: datetime
     """
     fn = '[common.scheduler][get_next_event]'
-    r = None
-    try:
-        base = datetime.utcnow()-timedelta(seconds=default_timer-1)
-        r = croniter(timer_str, base).get_next(datetime)
-    except Exception as e:
-        log.error(f"{fn} : error found with cron-formatted timer: {timer_str}\n{e}")
-    return r
+    r = []
+
+    def fmt_timer(_base):
+        _r = None
+        try:
+            _r = croniter(timer_str, _base).get_next(datetime)
+        except Exception as e:
+            log.error(f"{fn} : error found with cron-formatted timer: {timer_str}\n{e}")
+        return _r
+
+    base = datetime.now(timezone.utc)-timedelta(seconds=default_timer-1)
+    for _ in range(count):
+        base = fmt_timer(base)
+        r.append(base)
+    return r if count > 1 else r[0]
 
 
 def isexecutable(dt:datetime, job_name:str=None) -> bool:
@@ -154,7 +162,7 @@ def isexecutable(dt:datetime, job_name:str=None) -> bool:
     fn = '[common.scheduler][isexecutable]'
     r = False
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         st = now-timedelta(seconds=default_timer-1)
         if dt > st and dt <= now:
             r = True
