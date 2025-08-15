@@ -72,6 +72,9 @@
 
 ## common.mongo.py
 
+### 1.5.1
+- read(): added support to query null values
+
 ### 1.4.1
 - fix issues with _sync_id being null
 
@@ -168,6 +171,12 @@
 
 
 ## common.scheduler
+
+### 1.3.0
+- add count support to get_next_event() for multiple outcome
+
+### 1.2.2
+- ???
 
 ### 1.2.1
 - converted status object to dict to be json serialization ready
