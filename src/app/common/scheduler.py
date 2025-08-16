@@ -31,7 +31,7 @@ def run_job(job_name:str=None, params:dict=None) -> list[Status]:
     jobs = []
     _argv = {}
 
-    log.info(f'{fn} : launching {job_name if job_name else "jobs"}...')
+    log.debug(f'{fn} : launching {job_name if job_name else "jobs"}...')
 
     # -- validate parameters
     if isinstance(job_name, str):
@@ -81,6 +81,8 @@ def _config_get_list() -> tuple[list, dict]:
 
     config.read()
     crons = config['crontab'] if isinstance(config['crontab'], dict) else {}
+    config['scheduler'] = {'last-run': ts()}
+    config.write()
     for j, t in crons.items():
         v2_plus = True if isinstance(t, dict) else False
         # -- version 1.x.x processing
@@ -91,8 +93,8 @@ def _config_get_list() -> tuple[list, dict]:
         elif v2_plus and isexecutable(get_next_event(t.get('schedule')), job_name=j):
             jobs += [j]
             params += [{j: t.get('params')}]
-
-    log.debug(f"{fn} : updated list of jobs: {jobs}")
+    if jobs:
+        log.info(f"{fn} : list of jobs to run: {jobs}")
     return jobs, params
 
 
@@ -161,14 +163,18 @@ def isexecutable(dt:datetime, job_name:str=None) -> bool:
     """
     fn = '[common.scheduler][isexecutable]'
     r = False
+
+    def fmt_dt(_dt):
+        return datetime.strftime(_dt, '%Y-%m-%d %H:%M:%S') if _dt else None
+
     try:
         now = datetime.now(timezone.utc)
         st = now-timedelta(seconds=default_timer-1)
         if dt > st and dt <= now:
             r = True
         log.debug(
-            f"{fn} : ? {st} > [{dt}] < {now} {r} "
-            f"{'('+job_name+')' if job_name else ''}")
+            f"{fn} : {fmt_dt(st)} > [{fmt_dt(dt)}] < {fmt_dt(now)} "
+            f"[{str(r).lower()}] {'('+job_name+')' if job_name else ''}")
     except:
         pass
     return r
