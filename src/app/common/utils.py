@@ -20,7 +20,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.24.0'
+__version__ = '1.24.1'
 
 g = {}
 UTILS_PART_OF_COMMON = True
@@ -116,7 +116,7 @@ class Config:
     def write(self):
         with open(self.file, 'w') as f:
             if yaml and self.file_type() == 'yaml':
-                 yaml.dump(self.params, f)
+                 yaml.dump(self.params, f, sort_keys=False)
             else:
                 jsonp.dump(self.params, f, indent=4)
 
@@ -383,7 +383,8 @@ class OAuth2:
         self.json = self.Json()
         self.headers = self.Headers()
         self.http_session = http_session if http_session else requests.Session()
-        self.url = None
+        self.base_url = None
+        self.api_url = None
 
         # -- standard oauth2 response
         self._access_token = None
@@ -602,21 +603,30 @@ def envar_in(txt) -> str:
 
 
 def do_get(url, verify_https=False):
-    return _do_request('GET', url, verify_https)
+    return do_requests('GET', url=url, verify_https=verify_https)
 
 
-def _do_request(kind, url, verify_https=False) -> tuple[object, Status]:
-    fn = '[common.utils][_do_get]'
+def do_post(url, headers=None, data=None, json=None, verify_https=False) -> tuple[object, Status]:
+    return do_requests('POST', url=url, headers=headers, data=data, json=json, verify_https=verify_https)
+
+
+def do_requests(method, url, headers=None, data=None, json=None, verify_https=False) -> tuple[object, Status]:
+    fn = '[common.utils][do_request]'
     r = None
     s = Status(204, 'Nothing happened.')
-    http_text = None
 
-    log.info(f"{fn} : {url}")
+    hd = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    if headers is None:
+        headers = {}
+    hd.update(headers)
 
-    if kind == 'GET':
-        res = requests.get(url, verify=verify_https)
+    res = None
+    log.debug(f"{fn} : URL: {url}")
+    log.debug(f"{fn} : headers: {hd}")
+    if method == 'GET':
+        log.info(f"{fn} : [GET] {url}")
+        res = requests.get(url, headers=hd, data=data, verify=verify_https)
         if res.status_code == 200:
-            http_text = res.text
             r = res.json()
             if not r:
                 s.code = 404
@@ -624,12 +634,54 @@ def _do_request(kind, url, verify_https=False) -> tuple[object, Status]:
             else:
                 s.code = 200
                 s.message = 'OK.'
+        else:
+            s.code = res.status_code
+            s.message = f'Error: {res.text}'
+    elif method == 'POST':
+        log.info(f"{fn} : [POST] {url}")
+        res = requests.post(url, headers=hd, data=data, json=json, verify=verify_https)
+        if res.status_code in [200, 201]:
+            r = res.json()
+            s.code = res.status_code
+            s.message = '[POST] successful.'
+        else:
+            s.code = res.status_code
+            s.message = f'Error: {res.text}'
     else:
-        log.error(f"{fn} : returns {http_text}")
+        s.message = 'HTTP method is currently not supported.'
+    log.info(f"{fn} : message : {s.message}")
     del res
 
     log.debug(f"{fn} : returns {r}")
     return r, s
+
+
+# def _do_request(url, headers=None, data=None, json=None, method=None):
+#     r = None
+#     hdr = {}
+
+#     if isinstance(headers, dict):
+#         hdr.update(headers)
+#     if not method:
+#         method = 'POST' if data or json else 'GET'
+
+#     log.info(f"[{method}] request-url: {url}")
+#     log.debug(f"headers: {headers}")
+#     if url:
+#         if method == 'GET':
+#             res = session.get(url, headers=headers, data=data)
+#         elif method == 'POST':
+#             res = session.post(url, headers=hdr, data=data, json=json)
+#         else:
+#             ...
+#         if res.status_code in [200, 201]:
+#             try:
+#                 r = res.json()
+#             except:
+#                 r = res.content
+#         else:
+#             log.debug(f"response: {res.content}")
+#     return r
 
 
 def next_add(text):
