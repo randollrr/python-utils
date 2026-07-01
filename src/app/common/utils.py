@@ -20,7 +20,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.24.0'
+__version__ = '1.23.x'
 
 g = {}
 UTILS_PART_OF_COMMON = True
