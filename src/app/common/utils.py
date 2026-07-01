@@ -603,8 +603,8 @@ def envar_in(txt) -> str:
     return r
 
 
-def do_get(url, data=None:dict, http_session=None, verify_https=False):
-    return do_requests('GET', url=url, http_session=http_session, verify_https=verify_https)
+def do_get(url, data=None, http_session=None, verify_https=False) -> tuple[object, Status]:
+    return do_requests('GET', url=url, http_session=http_session, data=data, verify_https=verify_https)
 
 
 def do_post(url, headers=None, data=None, json=None, http_session=None, verify_https=False) -> tuple[object, Status]:
