@@ -11,6 +11,7 @@ from datetime import datetime, timezone, timedelta
 import json as jsonp
 import logging
 import os
+from re import compile as re_compile
 import requests
 import warnings
 from logging.handlers import RotatingFileHandler
@@ -20,7 +21,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.24.1'
+__version__ = '1.23.3'
 
 g = {}
 UTILS_PART_OF_COMMON = True
@@ -298,7 +299,7 @@ class OAuth2:
     Usage: ...
 
     # -- initialize oauth
-    session = requests.Session()
+    http_session = requests.Session()
     oauth = OAuth2(token_keyname='access_token', exp_keyname='expires_in',
                    http_session=session)
     oauth.url = config['ipam']['api-url']
@@ -602,18 +603,19 @@ def envar_in(txt) -> str:
     return r
 
 
-def do_get(url, verify_https=False):
-    return do_requests('GET', url=url, verify_https=verify_https)
+def do_get(url, data=None:dict, http_session=None, verify_https=False):
+    return do_requests('GET', url=url, http_session=http_session, verify_https=verify_https)
 
 
-def do_post(url, headers=None, data=None, json=None, verify_https=False) -> tuple[object, Status]:
-    return do_requests('POST', url=url, headers=headers, data=data, json=json, verify_https=verify_https)
+def do_post(url, headers=None, data=None, json=None, http_session=None, verify_https=False) -> tuple[object, Status]:
+    return do_requests('POST', url=url, http_session=http_session, headers=headers, data=data, json=json, verify_https=verify_https)
 
 
-def do_requests(method, url, headers=None, data=None, json=None, verify_https=False) -> tuple[object, Status]:
+def do_requests(method, url, http_session=None, headers=None, data=None, json=None, verify_https=False) -> tuple[object, Status]:
     fn = '[common.utils][do_request]'
     r = None
     s = Status(204, 'Nothing happened.')
+    http_session = http_session if http_session else requests.Session()
 
     hd = {'Content-Type': 'application/json', 'Accept': 'application/json'}
     if headers is None:
@@ -623,11 +625,20 @@ def do_requests(method, url, headers=None, data=None, json=None, verify_https=Fa
     res = None
     log.debug(f"{fn} : URL: {url}")
     log.debug(f"{fn} : headers: {hd}")
+
+    # -- validate url
+    pattern = re_compile(r'^https:\/\/[a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})+\/[^\s?]+(?:\?[^\s]+)?$')
+    if not pattern.match(url):
+        s.code = 400
+        s.message = 'Bad URL.'
+        log.error(f"{fn} : {s.message} : {url}")
+        return r, s
+
     if method == 'GET':
         log.info(f"{fn} : [GET] {url}")
-        res = requests.get(url, headers=hd, data=data, verify=verify_https)
+        res = http_session.get(url, headers=hd, params=data, verify=verify_https)
         if res.status_code == 200:
-            r = res.json()
+            r = res.json() if res.json() else res.text
             if not r:
                 s.code = 404
                 s.message = 'No Data.'
@@ -639,9 +650,9 @@ def do_requests(method, url, headers=None, data=None, json=None, verify_https=Fa
             s.message = f'Error: {res.text}'
     elif method == 'POST':
         log.info(f"{fn} : [POST] {url}")
-        res = requests.post(url, headers=hd, data=data, json=json, verify=verify_https)
+        res = http_session.post(url, headers=hd, data=data, json=json, verify=verify_https)
         if res.status_code in [200, 201]:
-            r = res.json()
+            r = res.json() if res.json() else res.text
             s.code = res.status_code
             s.message = '[POST] successful.'
         else:
@@ -654,34 +665,6 @@ def do_requests(method, url, headers=None, data=None, json=None, verify_https=Fa
 
     log.debug(f"{fn} : returns {r}")
     return r, s
-
-
-# def _do_request(url, headers=None, data=None, json=None, method=None):
-#     r = None
-#     hdr = {}
-
-#     if isinstance(headers, dict):
-#         hdr.update(headers)
-#     if not method:
-#         method = 'POST' if data or json else 'GET'
-
-#     log.info(f"[{method}] request-url: {url}")
-#     log.debug(f"headers: {headers}")
-#     if url:
-#         if method == 'GET':
-#             res = session.get(url, headers=headers, data=data)
-#         elif method == 'POST':
-#             res = session.post(url, headers=hdr, data=data, json=json)
-#         else:
-#             ...
-#         if res.status_code in [200, 201]:
-#             try:
-#                 r = res.json()
-#             except:
-#                 r = res.content
-#         else:
-#             log.debug(f"response: {res.content}")
-#     return r
 
 
 def next_add(text):
