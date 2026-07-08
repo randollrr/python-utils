@@ -7,6 +7,19 @@
 
 ## common.utils.py
 
+### 1.23.4
+improved :
+- utils.OAuth2._do_login()
+- utils.OAuth2.use_basic_authen()
+- utils.envar_in()
+- utils.ts()
+
+### 1.23.3
+- improve _do_request()
+
+### 1.23.2
+- OAth2._login : optimized basic_authentication
+
 ### 1.23.1
 - updated OAuth2
 - updated ts(), added new functionalities
@@ -174,6 +187,8 @@
 
 ### 1.3.0
 - add count support to get_next_event() for multiple outcome
+- minor updates to logging
+- add last-run-dt: ts() to config file
 
 ### 1.2.2
 - ???

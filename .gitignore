@@ -5,6 +5,7 @@
 .env
 env/
 .idea/
+node_modules
 .project
 .pytest_cache/
 __pycache__/
