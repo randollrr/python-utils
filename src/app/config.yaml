@@ -4,11 +4,6 @@ service:
   log-level: DEBUG
   log-stdout: true
 crontab:
-  cron.job_sample:
-    # schedule: '*/5 * * * *'
-    schedule: '* * * * *'
-    params:
-      override: true
   cron.job_janitor: '* * * * *'
   cron.job_example:
     schedule: '* * * * *'
@@ -25,7 +20,6 @@ mongo.dev:
   authenticationDatabase: ''
   collection: test
   database: test_db
-  # host: 172.29.176.1
   host: host.docker.internal
   password: null
   port: 27017
@@ -37,6 +31,8 @@ mongo.prod:
   password: password
   port: 27017
   username: username
+scheduler:
+  last-run: '2025-08-16T00:29:18Z'
 sendmail:
   default-from: me@email.com
   port: null

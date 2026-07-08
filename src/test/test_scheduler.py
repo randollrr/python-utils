@@ -31,8 +31,12 @@ def test_get_next_event(req, ret):
 
 
 def test_get_next_event_2():
-    print(sch.get_next_event('* * * * *'))
-    print(sch.get_next_event('8 * * * *'))
+    print(f"\n{sch.get_next_event('* * * * *')}")
+    print(f"\n{sch.get_next_event('8 * * * *')}")
+    print(f"\n{sch.get_next_event('0 0/12 * * *')}")
+    print()
+    for t in sch.get_next_event('0 4,16 * * *', 4):
+        print(t)
     assert True
 
 

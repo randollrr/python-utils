@@ -21,10 +21,11 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.23.3'
+__version__ = '1.23.4'
 
-g = {}
-UTILS_PART_OF_COMMON = True
+g = {}  # for global variables to be used across apps and scripts
+UTILS_PART_OF_COMMON = True  # set True if this module is part of a common folder,
+                             # (False, for standalone script)
 
 
 def deprecated(func):
@@ -70,8 +71,10 @@ class Config:
             ft = change_to
             self.file = f"{'.'.join(t_split[:len(t_split)-1])}.{change_to}"
         else:
-            ft = 'json'
-            if t == 'yaml' or t == 'yml':
+            ft = 'memory'
+            if t == 'json':
+                ft = 'json'
+            elif t == 'yaml' or t == 'yml':
                 ft = 'yaml'
         return ft
 
@@ -336,7 +339,7 @@ class OAuth2:
             return jsonp.dumps(self.__dict__, indent=4) if self.__dict__ else None
 
     class Endpoints:
-        authen = '/authenticate'
+        authen = None
 
     class Json:
         def __repr__(self) -> str:
@@ -419,7 +422,6 @@ class OAuth2:
         if not json:
             json = self.json.to_json()
 
-        log.info(f"{fn} : sending request to: {self.ep.authen}")
         try:
             if self._auth_process:
                 if self._auth_basic_formencoded:
@@ -428,12 +430,17 @@ class OAuth2:
                     credentials = base64.encodebytes(bytes(
                         f"{self.data.username}:{self.data.password}",
                         "utf-8")).decode("utf-8")
-                    headers['Authorization'] = f"Basic {credentials[:-1]}"
-            log.debug(f"{fn} : hearders: {headers}")
+                    log.debug(f"{fn} : Basic Auth Credentials: [{self.data.username}:{str(self.data.password)[:4]}****] => {credentials}")
+                    headers['Authorization'] = f"Basic {credentials[:-1] if '\n' in credentials else credentials}"
+            log.debug(f"{fn} : URL: {self.ep.authen}")
+            log.debug(f"{fn} : headers: {headers}")
             log.debug(f"{fn} : data: {data}")
             log.debug(f"{fn} : json: {json}")
-            res = self.http_session.post(self.ep.authen, headers=headers, data=data,
-                json=json, verify=False)
+            res = None
+            if self.ep.authen:
+                log.info(f"{fn} : sending request to: {self.ep.authen}")
+                res = self.http_session.post(self.ep.authen, headers=headers, data=data,
+                    json=json, verify=False)
             log.debug(f"{fn} : response object (repr) : {res}")
             if res and res.status_code == 200:
                 r = res.json()
@@ -453,8 +460,9 @@ class OAuth2:
                     self.headers.__dict__['Content-Type'] = 'application/json'
                     self._auth_process = False
             else:
-                s.code = res.status_code
-                s.message = f"{fn} : response: {res.text}"
+                s.code = res.status_code if res else 204
+                s.message = f"{fn} : response: {res.text}" if res else f"{fn} : login request was not sent"
+                log.info(s.message)
             del res
         except Exception as e:
             s.code = 500
@@ -570,9 +578,11 @@ class OAuth2:
     def use_basic_authen(self, b64=False, data_omits=None, via_form=True):
         self._auth_basic_formencoded = via_form
         if b64:
+            self._auth_process = True
             self._auth_basic_encoded = True
         if isinstance(data_omits, list):
             self._data_omits = data_omits
+        self._do_login()
 
     def use_bearer(self, set_to=True):
         if set_to and not self._token_type:
@@ -591,7 +601,7 @@ def envar_in(txt) -> str:
     """
     Returns environment variable value and replace in string.
     """
-    r = txt
+    r = None
     if isinstance(txt, str) and '((env:' in txt and '))' in txt:
         s = txt.index('((env:')
         e = txt.index('))')
@@ -600,7 +610,7 @@ def envar_in(txt) -> str:
         if t:
             r = txt.replace(v, t)
         del s, e, v, t, txt
-    return r
+    return r if r else txt
 
 
 def do_get(url, data=None, http_session=None, verify_https=False) -> tuple[object, Status]:
@@ -712,19 +722,21 @@ def rwjson(action, key_fn) -> None:
     return
 
 
-def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None) -> object:
+def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None, from_pattern=None) -> object:
     """
     Provide the current timestamp in various formats.
     :param kind: (deprecated, same as ret)
     :param ret: string to describe expected return value type (default: iso8601)
     :param from_dt: use string as input
     :param from_ts: use int[timestamp] as input
+    :param from_pattern: use string as input
     :return: object|string
     Example:
         ts(ret='date', from_dt='2024-01-31T23:59:59')
         ts(ret='object', from_dt='2024-01-31T23:59:59')
         ts(ret='iso8601', from_ts=1234567890)
         ts(from_obj=datetime.now(timezone.utc))
+        ts(from_pattern='%Y-%m-%d %H:%M:%S', from_dt='2024-01-31 23:59:59')
     """
     fn = '[common.utils][ts]'
     r = None
@@ -736,7 +748,7 @@ def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None) -> object
         elif from_obj:
             dt = from_obj
         elif from_dt:
-            dt = datetime.strptime(from_dt, '%Y-%m-%dT%H:%M:%SZ')
+            dt = datetime.strptime(from_dt, '%Y-%m-%dT%H:%M:%SZ' if not from_pattern else from_pattern)
         elif from_ts:
             dt = datetime.fromtimestamp(from_ts, timezone.utc)
 
