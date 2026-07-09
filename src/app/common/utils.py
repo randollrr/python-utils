@@ -21,7 +21,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.23.4'
+__version__ = '1.23.x'
 
 g = {}  # for global variables to be used across apps and scripts
 UTILS_PART_OF_COMMON = True  # set True if this module is part of a common folder,
