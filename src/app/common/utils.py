@@ -430,8 +430,9 @@ class OAuth2:
                     credentials = base64.encodebytes(bytes(
                         f"{self.data.username}:{self.data.password}",
                         "utf-8")).decode("utf-8")
+                    credentials = credentials.replace('\n', '')
                     log.debug(f"{fn} : Basic Auth Credentials: [{self.data.username}:{str(self.data.password)[:4]}****] => {credentials}")
-                    headers['Authorization'] = f"Basic {credentials[:-1] if '\n' in credentials else credentials}"
+                    headers['Authorization'] = f"Basic {credentials}"
             log.debug(f"{fn} : URL: {self.ep.authen}")
             log.debug(f"{fn} : headers: {headers}")
             log.debug(f"{fn} : data: {data}")
