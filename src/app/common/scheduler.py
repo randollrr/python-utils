@@ -13,7 +13,7 @@ from croniter import croniter
 # -- project-libs
 from common.utils import config, log, Status, ts
 
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 default_timer = 60  # in second
 _g = {'previously_loaded': {}}
@@ -75,12 +75,18 @@ def _config_get_list() -> tuple[list, dict]:
     :return: list of jobs
     :return: list of parameters for each job
     """
-    fn = '[common.scheduler][config_get_list]'
+    fn = '[common.scheduler][_config_get_list]'
     jobs = []
     params = []
 
     config.read()
-    crons = config['crontab'] if isinstance(config['crontab'], dict) else {}
+    crons = {}
+    if isinstance(config['crontab'], dict):
+        crons = config['crontab']
+    else:
+        log.error(f"{fn} : config['crontab'] is parameters are missing.")
+        return jobs, params
+
     config['scheduler'] = {'last-run': ts()}
     config.write()
     for j, t in crons.items():

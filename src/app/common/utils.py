@@ -21,7 +21,7 @@ try:
 except ImportError:
     yaml = None
 
-__version__ = '1.23.x'
+__version__ = '1.23.4'
 
 g = {}  # for global variables to be used across apps and scripts
 UTILS_PART_OF_COMMON = True  # set True if this module is part of a common folder,
@@ -53,11 +53,14 @@ class Config:
                 self.file = f"{wd()}/config.json"
             elif yaml and os.path.exists(f"{wd()}/config.yaml"):
                 self.file = f"{wd()}/config.yaml"
+            else:
+                self.set_defaults()
 
         # -- read configs
         if self.file:
             if os.path.exists(self.file):
                 self.read()
+        return
 
     def file_type(self, change_to=None):
         """
@@ -65,13 +68,17 @@ class Config:
         :param change_to: json or yaml
         :return: current file type
         """
+        ft = 'memory'
+
+        if not self.file:
+            return ft
+
         t_split = self.file.split('.')
         t = t_split[len(t_split)-1]
         if isinstance(change_to, str):
             ft = change_to
             self.file = f"{'.'.join(t_split[:len(t_split)-1])}.{change_to}"
         else:
-            ft = 'memory'
             if t == 'json':
                 ft = 'json'
             elif t == 'yaml' or t == 'yml':
@@ -90,12 +97,18 @@ class Config:
         return r
 
     def read(self):
+        fn = '[common.utils.Config][read]'
+        if self.file_type() == 'memory':
+            log.info(f"{fn} : config file is not set.")
+            return
+
         with open(self.file, 'r') as f:
             if yaml and self.file_type() == 'yaml':
                 self.params = yaml.load(f, Loader=yaml.FullLoader)
             else:
                 self.params = jsonp.load(f)
             self._state = True
+        return
 
     def __repr__(self):
         return jsonp.dumps(self.params, indent=4)
@@ -106,6 +119,7 @@ class Config:
     @deprecated
     def save(self):
         self.write()
+        return
 
     def set(self, fp):
         self.file = fp
@@ -113,17 +127,35 @@ class Config:
         # -- read configs
         if os.path.exists(self.file):
             self.read()
+        return
+
+    def set_defaults(self):
+        self.params = {
+            'service': {
+                'app-name': 'app',
+                'app-logs': None,
+                'log-level': 'DEBUG',
+                'log-stdout': True
+            }
+        }
+        self._state = True
+        return
 
     def status(self):
         return self._state
 
     def write(self):
+        fn = '[common.utils.Config][write]'
+        if self.file_type() == 'memory':
+            log.info(f"{fn} : config file is not set.")
+            return
+
         with open(self.file, 'w') as f:
             if yaml and self.file_type() == 'yaml':
                  yaml.dump(self.params, f, sort_keys=False)
             else:
                 jsonp.dump(self.params, f, indent=4)
-
+        return
 
 class Log:
     """
@@ -742,6 +774,9 @@ def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None, from_patt
     fn = '[common.utils][ts]'
     r = None
 
+    if not from_pattern:
+        from_pattern = '%Y-%m-%dT%H:%M:%SZ'
+
     try:
         # -- get datetime object
         if not from_dt and not from_ts and not from_obj:
@@ -749,7 +784,7 @@ def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None, from_patt
         elif from_obj:
             dt = from_obj
         elif from_dt:
-            dt = datetime.strptime(from_dt, '%Y-%m-%dT%H:%M:%SZ' if not from_pattern else from_pattern)
+            dt = datetime.strptime(from_dt, from_pattern)
         elif from_ts:
             dt = datetime.fromtimestamp(from_ts, timezone.utc)
 
@@ -759,7 +794,7 @@ def ts(kind=None, ret=None, from_dt=None, from_ts=None, from_obj=None, from_patt
         elif kind == 'object' or ret == 'object':
             r = dt
         elif not kind or not ret or ret == 'iso8601':
-            r = datetime.strftime(dt, '%Y-%m-%dT%H:%M:%SZ')
+            r = datetime.strftime(dt, from_pattern)
     except Exception as e:
         log.error(f"{fn} : {e}")
     return r

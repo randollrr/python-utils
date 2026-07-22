@@ -2,7 +2,7 @@
 Library to quickly/easily connect to MongoDB and using CRUD functionalities
 in a frictionless way.
 """
-__version__ = '1.5.1'
+__version__ = '1.5.2'
 
 from copy import deepcopy
 import os
@@ -73,7 +73,7 @@ class MongoDB:
         if not db_name and self.db is None:
             if db_config.get('database'):
                 self.db = self.client[db_config['database']]
-            else:
+            elif self.client is not None:
                 self.db = self.client['test_db']
         elif db_name and not self.db:
             self.db = self.client[db_name]
@@ -87,10 +87,11 @@ class MongoDB:
         elif collection_name and self.db is not None:
             self.collection = self.db[collection_name]
 
-        if collection_obj is not None and db_obj is not None:
-            log.info(f"{fn} : Using existing connection: {self.db.name}@{self.client.address}")
-        else:
-            log.info(f"{fn} : Connection object created for {self.db.name}")
+        if self.client is not None and self.db is not None and self.collection is not None:
+            if collection_obj is not None and db_obj is not None:
+                log.info(f"{fn} : Using existing connection: {self.db.name}@{self.client.address}")
+            else:
+                log.info(f"{fn} : Connection object created for {self.db.name}")
 
 
     def close(self):
