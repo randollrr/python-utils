@@ -13,6 +13,9 @@ improved :
 - utils.OAuth2.use_basic_authen()
 - utils.envar_in()
 - utils.ts()
+added :
+- utils.Config.set_default() for missing config files
+- exception handlers for : utils.Config.read(), utils.Config.file_type()
 
 ### 1.23.3
 - improve _do_request()
@@ -84,6 +87,9 @@ improved :
 
 
 ## common.mongo.py
+
+### 1.5.2
+- improved exception handler for missing parameters in config file
 
 ### 1.5.1
 - read(): added support to query null values
@@ -184,6 +190,9 @@ improved :
 
 
 ## common.scheduler
+
+### 1.3.1
+- improved exception handler for missing parameters in config file
 
 ### 1.3.0
 - add count support to get_next_event() for multiple outcome
